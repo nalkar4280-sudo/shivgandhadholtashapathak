@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Supabase Client
+    const { createClient } = supabase;
+    const supabaseUrl = 'https://zztmgekdjpygnaalojrc.supabase.co';
+    const supabaseKey = 'sb_publishable_okeZciLTaImpoCI3sfqdAw_fFZRIeXg';
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
     // Preloader fadeout logic
     const preloader = document.getElementById('preloader');
     const hidePreloader = () => {
@@ -179,27 +185,28 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.innerHTML = `<span>Enrolling...</span><i class="fa-solid fa-spinner fa-spin"></i>`;
 
         try {
-            const response = await fetch('/api/enroll', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            });
+            const { data, error } = await supabaseClient
+                .from('enrollees')
+                .insert([
+                    {
+                        name: formData.name,
+                        contact: formData.contact,
+                        age: formData.age,
+                        gender: formData.gender,
+                        instrument: formData.instrument,
+                        terms_accepted: formData.termsAccepted
+                    }
+                ]);
 
-            const result = await response.json();
+            if (error) throw error;
 
-            if (response.ok && result.success) {
-                // Show Success Modal
-                successModal.classList.add('active');
-                // Reset Form
-                form.reset();
-            } else {
-                alert(result.message || 'Something went wrong. Please try again.');
-            }
+            // Show Success Modal
+            successModal.classList.add('active');
+            // Reset Form
+            form.reset();
         } catch (error) {
             console.error('Submission Error:', error);
-            alert('Failed to connect to the server. Please ensure the server is running.');
+            alert('Submission failed: ' + error.message);
         } finally {
             // Re-enable Submit Button
             submitBtn.disabled = false;
