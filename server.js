@@ -34,29 +34,57 @@ function requireAdminAuth(req, res, next) {
 
 // API to enroll new member
 app.post('/api/enroll', async (req, res) => {
-  const { name, contact, age, instrument, gender, termsAccepted } = req.body;
+  const { name, contact, age, instrument, gender, termsAccepted, parentContact, bloodGroup } = req.body;
 
   // Basic validation
-  if (!name || !contact || !age || !instrument || !gender || termsAccepted === undefined) {
+  if (!name || !contact || !age || !instrument || !gender || termsAccepted === undefined || !parentContact || !bloodGroup) {
     return res.status(400).json({ success: false, message: 'All fields are required' });
   }
 
   try {
+    const enrolleeData = {
+      name: name.trim(),
+      contact: contact.trim(),
+      age: parseInt(age),
+      gender,
+      instrument,
+      terms_accepted: termsAccepted
+    };
+
+    if (parentContact) {
+      enrolleeData.parent_contact = parentContact.trim();
+    }
+    if (bloodGroup) {
+      enrolleeData.blood_group = bloodGroup;
+    }
+
     const { data, error } = await supabase
       .from('enrollees')
-      .insert([
-        {
+      .insert([enrolleeData])
+      .select();
+
+    if (error) {
+      // Handle schema column missing error code 42703
+      if (error.code === '42703' || (error.message && error.message.toLowerCase().includes('column'))) {
+        console.warn("Warning: Supabase table 'enrollees' is missing parent_contact or blood_group columns. Falling back to default fields.");
+        const fallbackData = {
           name: name.trim(),
           contact: contact.trim(),
           age: parseInt(age),
           gender,
           instrument,
           terms_accepted: termsAccepted
-        }
-      ])
-      .select();
+        };
+        const { data: fallbackRes, error: fallbackErr } = await supabase
+          .from('enrollees')
+          .insert([fallbackData])
+          .select();
 
-    if (error) throw error;
+        if (fallbackErr) throw fallbackErr;
+        return res.json({ success: true, message: 'Enrolled successfully!', data: fallbackRes[0] });
+      }
+      throw error;
+    }
 
     res.json({ success: true, message: 'Enrolled successfully!', data: data[0] });
   } catch (err) {
@@ -94,7 +122,9 @@ app.get('/api/enrollees', requireAdminAuth, async (req, res) => {
       gender: item.gender,
       instrument: item.instrument,
       termsAccepted: item.terms_accepted,
-      enrolledAt: item.enrolled_at
+      enrolledAt: item.enrolled_at,
+      parentContact: item.parent_contact,
+      bloodGroup: item.blood_group
     }));
 
     res.json({ success: true, data: mappedData });

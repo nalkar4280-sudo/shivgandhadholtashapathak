@@ -96,6 +96,33 @@
                     </div>
                 </div>
 
+                <!-- Parent's Number & Blood Group Row -->
+                <div class="form-row">
+                    <!-- Parent Number Input -->
+                    <div class="input-group parent-group">
+                        <label for="parent-contact"><i class="fa-solid fa-phone"></i> Parent's Number</label>
+                        <input type="tel" id="parent-contact" name="parentContact" placeholder="Enter 10-digit number" required autocomplete="off" maxlength="10">
+                        <span class="error-msg" id="parent-contact-error">Please enter a valid 10-digit number</span>
+                    </div>
+
+                    <!-- Blood Group Dropdown -->
+                    <div class="input-group blood-group">
+                        <label for="blood-group"><i class="fa-solid fa-droplet"></i> Blood Group</label>
+                        <select id="blood-group" name="bloodGroup" required>
+                            <option value="" disabled selected>Select</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                        <span class="error-msg" id="blood-group-error">Please select blood group</span>
+                    </div>
+                </div>
+
                 <!-- Instrument Selection with Photos -->
                 <div class="input-group">
                     <label><i class="fa-solid fa-drum"></i> Choose Instrument</label>

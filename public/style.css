@@ -264,6 +264,14 @@ nav {
     flex: 0.65;
 }
 
+.parent-group {
+    flex: 0.65;
+}
+
+.blood-group {
+    flex: 0.35;
+}
+
 /* Gender Selection Styles */
 .gender-options {
     display: flex;
@@ -702,6 +710,16 @@ footer {
     }
     
     .gender-group {
+        flex: 1;
+        margin-top: 0.5rem;
+    }
+
+    .parent-group {
+        flex: 1;
+        margin-top: 0.5rem;
+    }
+
+    .blood-group {
         flex: 1;
         margin-top: 0.5rem;
     }

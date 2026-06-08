@@ -854,3 +854,34 @@ footer {
 .whatsapp-link i {
     font-size: 1.05rem;
 }
+
+.phone-link {
+    text-decoration: none;
+    color: #0a84ff;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s ease;
+}
+
+.phone-link:hover {
+    color: #4fa3ff;
+    text-shadow: 0 0 10px rgba(10, 132, 255, 0.3);
+}
+
+.phone-link i {
+    font-size: 0.95rem;
+}
+
+.blood-group-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--error-red);
+    font-weight: 600;
+}
+
+.blood-group-tag i {
+    font-size: 0.9rem;
+}

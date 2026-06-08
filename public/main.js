@@ -59,12 +59,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const nameInput = document.getElementById('name');
     const contactInput = document.getElementById('contact');
     const ageInput = document.getElementById('age');
+    const parentContactInput = document.getElementById('parent-contact');
+    const bloodGroupInput = document.getElementById('blood-group');
     const termsCheckbox = document.getElementById('terms');
 
     // Error message containers
     const nameError = document.getElementById('name-error');
     const contactError = document.getElementById('contact-error');
     const ageError = document.getElementById('age-error');
+    const parentContactError = document.getElementById('parent-contact-error');
+    const bloodGroupError = document.getElementById('blood-group-error');
     const instrumentError = document.getElementById('instrument-error');
     const termsError = document.getElementById('terms-error');
 
@@ -87,6 +91,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const ageVal = parseInt(ageInput.value);
         if (!isNaN(ageVal) && ageVal >= 10 && ageVal <= 80) {
             ageInput.closest('.input-group').classList.remove('invalid');
+        }
+    });
+
+    parentContactInput.addEventListener('input', () => {
+        const parentVal = parentContactInput.value.trim();
+        const contactPattern = /^[0-9]{10}$/;
+        if (contactPattern.test(parentVal)) {
+            parentContactInput.closest('.input-group').classList.remove('invalid');
+        }
+    });
+
+    bloodGroupInput.addEventListener('change', () => {
+        if (bloodGroupInput.value !== '') {
+            bloodGroupInput.closest('.input-group').classList.remove('invalid');
         }
     });
 
@@ -132,6 +150,23 @@ document.addEventListener('DOMContentLoaded', () => {
             contactInput.closest('.input-group').classList.remove('invalid');
         }
 
+        // Parent Contact Validation (10 digits)
+        const parentContactVal = parentContactInput.value.trim();
+        if (parentContactVal === '' || !contactPattern.test(parentContactVal)) {
+            parentContactInput.closest('.input-group').classList.add('invalid');
+            isValid = false;
+        } else {
+            parentContactInput.closest('.input-group').classList.remove('invalid');
+        }
+
+        // Blood Group Validation
+        if (bloodGroupInput.value === '') {
+            bloodGroupInput.closest('.input-group').classList.add('invalid');
+            isValid = false;
+        } else {
+            bloodGroupInput.closest('.input-group').classList.remove('invalid');
+        }
+
         // Age Validation
         const ageVal = parseInt(ageInput.value);
         if (ageInput.value === '' || isNaN(ageVal) || ageVal < 10 || ageVal > 80) {
@@ -167,6 +202,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = {
             name: nameInput.value.trim(),
             contact: contactInput.value.trim(),
+            parentContact: parentContactVal,
+            bloodGroup: bloodGroupInput.value,
             age: ageVal,
             gender: genderInput ? genderInput.value : 'Male',
             instrument: selectedInstrument ? selectedInstrument.value : '',

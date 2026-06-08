@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showLoadingState() {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="7" class="table-empty">
+                <td colspan="9" class="table-empty">
                     <i class="fa-solid fa-spinner fa-spin empty-icon"></i>
                     <p>Loading enrollees list...</p>
                 </td>
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showErrorState(message) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="7" class="table-empty">
+                <td colspan="9" class="table-empty">
                     <i class="fa-solid fa-circle-exclamation empty-icon" style="color: var(--error-red)"></i>
                     <p>${message}</p>
                 </td>
@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (filteredData.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="table-empty">
+                    <td colspan="9" class="table-empty">
                         <i class="fa-solid fa-folder-open empty-icon"></i>
                         <p>No matching enrollees found.</p>
                     </td>
@@ -230,15 +230,18 @@ document.addEventListener('DOMContentLoaded', () => {
         tableBody.innerHTML = filteredData.map(e => {
             const dateStr = formatDate(e.enrolledAt);
             const instClass = `inst-${e.instrument.toLowerCase()}`;
-            const contactVal = e.contact || 'N/A';
             const whatsappLink = e.contact ? `<a href="https://wa.me/91${e.contact}" target="_blank" class="whatsapp-link" title="Message on WhatsApp"><i class="fa-brands fa-whatsapp"></i> ${escapeHTML(e.contact)}</a>` : 'N/A';
+            const parentContactLink = e.parentContact ? `<a href="tel:+91${e.parentContact}" class="phone-link" title="Call Parent"><i class="fa-solid fa-phone"></i> ${escapeHTML(e.parentContact)}</a>` : 'N/A';
+            const bloodGroupTag = e.bloodGroup ? `<span class="blood-group-tag"><i class="fa-solid fa-droplet"></i> ${escapeHTML(e.bloodGroup)}</span>` : 'N/A';
             
             return `
                 <tr>
                     <td><span class="member-name">${escapeHTML(e.name)}</span></td>
                     <td>${whatsappLink}</td>
+                    <td>${parentContactLink}</td>
                     <td>${e.age} yrs</td>
                     <td><span class="gender-tag">${e.gender}</span></td>
+                    <td>${bloodGroupTag}</td>
                     <td><span class="badge-instrument ${instClass}">${e.instrument}</span></td>
                     <td><span class="date-text">${dateStr}</span></td>
                     <td class="text-right">
