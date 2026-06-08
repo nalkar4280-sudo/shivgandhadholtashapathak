@@ -1,10 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Supabase Client
-    const { createClient } = supabase;
-    const supabaseUrl = 'https://zztmgekdjpygnaalojrc.supabase.co';
-    const supabaseKey = 'sb_publishable_okeZciLTaImpoCI3sfqdAw_fFZRIeXg';
-    const supabaseClient = createClient(supabaseUrl, supabaseKey);
-
     // In-memory admin authentication token (automatically wiped on page refresh)
     let adminToken = null;
 
@@ -97,31 +91,36 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Fetch enrollees from Supabase
+    // Fetch enrollees from API
     async function fetchEnrollees() {
+        const token = getAuthToken();
+        if (!token) {
+            showLogin();
+            return;
+        }
         showLoadingState();
         try {
-            const { data, error } = await supabaseClient
-                .from('enrollees')
-                .select('*')
-                .order('enrolled_at', { ascending: false });
+            const response = await fetch('/api/enrollees', {
+                headers: getAuthHeaders()
+            });
 
-            if (error) throw error;
+            if (response.status === 401) {
+                adminToken = null;
+                showLogin();
+                return;
+            }
+
+            const result = await response.json();
             
-            enrollees = (data || []).map(item => ({
-                id: item.id,
-                name: item.name,
-                contact: item.contact,
-                age: item.age,
-                gender: item.gender,
-                instrument: item.instrument,
-                enrolledAt: item.enrolled_at
-            }));
-
-            updateDashboard();
+            if (response.ok && result.success) {
+                enrollees = result.data || [];
+                updateDashboard();
+            } else {
+                showErrorState(result.message || 'Failed to fetch enrollees.');
+            }
         } catch (error) {
             console.error('Error fetching enrollees:', error);
-            showErrorState('Failed to fetch enrollees from Supabase: ' + error.message);
+            showErrorState('Failed to connect to the backend server.');
         }
     }
 
@@ -289,24 +288,41 @@ document.addEventListener('DOMContentLoaded', () => {
     async function deleteEnrollee() {
         if (!deleteTargetId) return;
 
+        const token = getAuthToken();
+        if (!token) {
+            showLogin();
+            return;
+        }
+
         confirmDeleteBtn.disabled = true;
         confirmDeleteBtn.textContent = 'Removing...';
 
         try {
-            const { error } = await supabaseClient
-                .from('enrollees')
-                .delete()
-                .eq('id', deleteTargetId);
+            const response = await fetch(`/api/enrollees/${deleteTargetId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
 
-            if (error) throw error;
+            if (response.status === 401) {
+                adminToken = null;
+                closeDeleteModal();
+                showLogin();
+                return;
+            }
 
-            // Update local memory & re-render
-            enrollees = enrollees.filter(e => e.id !== deleteTargetId);
-            updateDashboard();
-            closeDeleteModal();
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                // Update local memory & re-render
+                enrollees = enrollees.filter(e => e.id !== deleteTargetId);
+                updateDashboard();
+                closeDeleteModal();
+            } else {
+                alert(result.message || 'Failed to remove enrollee.');
+            }
         } catch (error) {
             console.error('Delete error:', error);
-            alert('Failed to remove enrollee: ' + error.message);
+            alert('Failed to connect to backend server for deletion.');
         } finally {
             confirmDeleteBtn.disabled = false;
             confirmDeleteBtn.textContent = 'Remove';
@@ -346,36 +362,26 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.querySelector('.input-group').classList.remove('invalid');
         
         try {
-            // Sign in to Supabase using email admin@shivgandha.com
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email: 'admin@shivgandha.com',
-                password: password
+            const response = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ password })
             });
             
-            if (error) {
-                // Fallback: Check if RLS is disabled or public read is allowed
-                const { data: testData, error: testError } = await supabaseClient
-                    .from('enrollees')
-                    .select('*')
-                    .limit(1);
-                
-                if (!testError) {
-                    hideLogin();
-                    fetchEnrollees();
-                    return;
-                }
-
+            const result = await response.json();
+            if (response.ok && result.success) {
+                adminToken = result.token;
+                hideLogin();
+                fetchEnrollees();
+            } else {
                 loginForm.querySelector('.input-group').classList.add('invalid');
-                loginErrorMsg.textContent = "Auth Error: " + error.message + " (Make sure admin@shivgandha.com is created in Supabase Auth, or disable RLS)";
                 loginErrorMsg.style.display = 'block';
-                return;
             }
-            
-            hideLogin();
-            fetchEnrollees();
         } catch (error) {
             console.error('Login error:', error);
-            alert('Connection to Supabase failed.');
+            alert('Connection to server failed.');
         }
     });
 
@@ -398,25 +404,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Initial load check
-    const checkSession = async () => {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
-            hideLogin();
-            fetchEnrollees();
-        } else {
-            // Check if RLS is disabled / public read allowed as a fallback
-            const { data: testData, error: testError } = await supabaseClient
-                .from('enrollees')
-                .select('*')
-                .limit(1);
-            
-            if (!testError) {
-                hideLogin();
-                fetchEnrollees();
-            } else {
-                showLogin();
-            }
-        }
-    };
-    checkSession();
+    const token = getAuthToken();
+    if (token) {
+        hideLogin();
+        fetchEnrollees();
+    } else {
+        showLogin();
+    }
 });

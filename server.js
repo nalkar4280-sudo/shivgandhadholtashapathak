@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
 const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3005;
@@ -13,6 +13,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Admin Authentication Config
 const ADMIN_PASSWORD = 'pathak123';
 const ADMIN_TOKEN = 'shivgandha-pathak-admin-token-2026';
+
+// Initialize Supabase client
+const supabaseUrl = 'https://zztmgekdjpygnaalojrc.supabase.co';
+const supabaseKey = 'sb_publishable_okeZciLTaImpoCI3sfqdAw_fFZRIeXg';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Middleware to verify admin session
 function requireAdminAuth(req, res, next) {
@@ -27,42 +32,8 @@ function requireAdminAuth(req, res, next) {
   next();
 }
 
-
-const DATA_DIR = path.join(__dirname, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'enrollees.json');
-
-// Ensure data folder and file exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR);
-}
-if (!fs.existsSync(DATA_FILE)) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
-}
-
-// Read helper
-function readEnrollees() {
-  try {
-    const data = fs.readFileSync(DATA_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (err) {
-    console.error("Error reading file:", err);
-    return [];
-  }
-}
-
-// Write helper
-function writeEnrollees(data) {
-  try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-    return true;
-  } catch (err) {
-    console.error("Error writing file:", err);
-    return false;
-  }
-}
-
 // API to enroll new member
-app.post('/api/enroll', (req, res) => {
+app.post('/api/enroll', async (req, res) => {
   const { name, contact, age, instrument, gender, termsAccepted } = req.body;
 
   // Basic validation
@@ -70,25 +41,27 @@ app.post('/api/enroll', (req, res) => {
     return res.status(400).json({ success: false, message: 'All fields are required' });
   }
 
-  const enrollees = readEnrollees();
+  try {
+    const { data, error } = await supabase
+      .from('enrollees')
+      .insert([
+        {
+          name: name.trim(),
+          contact: contact.trim(),
+          age: parseInt(age),
+          gender,
+          instrument,
+          terms_accepted: termsAccepted
+        }
+      ])
+      .select();
 
-  const newEnrollee = {
-    id: Date.now().toString(),
-    name: name.trim(),
-    contact: contact.trim(),
-    age: parseInt(age),
-    instrument,
-    gender,
-    termsAccepted,
-    enrolledAt: new Date().toISOString()
-  };
+    if (error) throw error;
 
-  enrollees.push(newEnrollee);
-
-  if (writeEnrollees(enrollees)) {
-    res.json({ success: true, message: 'Enrolled successfully!', data: newEnrollee });
-  } else {
-    res.status(500).json({ success: false, message: 'Failed to save enrollment' });
+    res.json({ success: true, message: 'Enrolled successfully!', data: data[0] });
+  } catch (err) {
+    console.error("Error inserting enrollee into Supabase:", err);
+    res.status(500).json({ success: false, message: 'Failed to save enrollment: ' + err.message });
   }
 });
 
@@ -103,27 +76,50 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 // API to list all enrollees
-app.get('/api/enrollees', requireAdminAuth, (req, res) => {
-  const enrollees = readEnrollees();
-  res.json({ success: true, data: enrollees });
+app.get('/api/enrollees', requireAdminAuth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('enrollees')
+      .select('*')
+      .order('enrolled_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Map database snake_case fields back to front-end camelCase properties
+    const mappedData = (data || []).map(item => ({
+      id: item.id,
+      name: item.name,
+      contact: item.contact,
+      age: item.age,
+      gender: item.gender,
+      instrument: item.instrument,
+      termsAccepted: item.terms_accepted,
+      enrolledAt: item.enrolled_at
+    }));
+
+    res.json({ success: true, data: mappedData });
+  } catch (err) {
+    console.error("Error fetching enrollees from Supabase:", err);
+    res.status(500).json({ success: false, message: 'Failed to fetch enrollees: ' + err.message });
+  }
 });
 
 // API to delete an enrollee
-app.delete('/api/enrollees/:id', requireAdminAuth, (req, res) => {
+app.delete('/api/enrollees/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
-  let enrollees = readEnrollees();
 
-  const originalLength = enrollees.length;
-  enrollees = enrollees.filter(e => e.id !== id);
+  try {
+    const { error } = await supabase
+      .from('enrollees')
+      .delete()
+      .eq('id', id);
 
-  if (enrollees.length === originalLength) {
-    return res.status(404).json({ success: false, message: 'Enrollee not found' });
-  }
+    if (error) throw error;
 
-  if (writeEnrollees(enrollees)) {
     res.json({ success: true, message: 'Enrollee deleted successfully' });
-  } else {
-    res.status(500).json({ success: false, message: 'Failed to delete enrollee' });
+  } catch (err) {
+    console.error("Error deleting enrollee from Supabase:", err);
+    res.status(500).json({ success: false, message: 'Failed to delete enrollee: ' + err.message });
   }
 });
 
