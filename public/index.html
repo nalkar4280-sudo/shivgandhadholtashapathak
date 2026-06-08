@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shivgandha Dhol Tasha Pathak - Enrollment</title>
+    <!-- Google Fonts for Traditional & Modern mix -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Preloader Screen -->
+    <div id="preloader">
+        <div class="preloader-content">
+            <div class="preloader-visual">
+                <img src="images/logo.png" alt="Shivgandha Dhol Tasha Pathak Logo" class="preloader-logo">
+            </div>
+            <h1 class="welcome-text">
+                <span class="welcome-sub">welcome in</span>
+                <span class="welcome-main">SHIVGANDHA DHOL TASHA PATHAK</span>
+            </h1>
+            <div class="preloader-bar">
+                <div class="preloader-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Background Animated Elements -->
+    <div class="bg-glow orange-glow"></div>
+    <div class="bg-glow gold-glow"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">
+                <img src="images/logo.png" alt="Shivgandha Logo" class="nav-logo">
+                <span class="logo-text">SHIVGANDHA</span>
+            </div>
+            <a href="admin.html" class="admin-link">
+                <i class="fa-solid fa-user-shield"></i> Admin Portal
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="container">
+        <div class="enrollment-card">
+            <div class="card-header">
+                <h2>Join the Legacy</h2>
+                <h1>SHIVGANDHA DHOL TASHA PATHAK</h1>
+                <p>Register yourself to be a part of Maharashtra's grandest traditional musical troupe. Feel the energy, drum the beats!</p>
+            </div>
+
+            <!-- Form -->
+            <form id="enrollment-form" novalidate>
+                <!-- Name Input -->
+                <div class="input-group">
+                    <label for="name"><i class="fa-solid fa-user"></i> Full Name</label>
+                    <input type="text" id="name" name="name" placeholder="Enter your full name" required autocomplete="off">
+                    <span class="error-msg" id="name-error">Please enter your name</span>
+                </div>
+
+                <!-- WhatsApp Contact Input -->
+                <div class="input-group">
+                    <label for="contact"><i class="fa-brands fa-whatsapp"></i> WhatsApp Number</label>
+                    <input type="tel" id="contact" name="contact" placeholder="Enter 10-digit number" required autocomplete="off" maxlength="10">
+                    <span class="error-msg" id="contact-error">Please enter a valid 10-digit WhatsApp number</span>
+                </div>
+
+                <!-- Age & Gender Row -->
+                <div class="form-row">
+                    <!-- Age Input -->
+                    <div class="input-group age-group">
+                        <label for="age"><i class="fa-solid fa-calendar-days"></i> Age</label>
+                        <input type="number" id="age" name="age" min="10" max="80" placeholder="Age" required>
+                        <span class="error-msg" id="age-error">Age (10 - 80)</span>
+                    </div>
+
+                    <!-- Gender Selection -->
+                    <div class="input-group gender-group">
+                        <label><i class="fa-solid fa-venus-mars"></i> Gender</label>
+                        <div class="gender-options">
+                            <label class="gender-radio">
+                                <input type="radio" name="gender" value="Male" required checked>
+                                <span class="radio-btn">Male</span>
+                            </label>
+                            <label class="gender-radio">
+                                <input type="radio" name="gender" value="Female">
+                                <span class="radio-btn">Female</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instrument Selection with Photos -->
+                <div class="input-group">
+                    <label><i class="fa-solid fa-drum"></i> Choose Instrument</label>
+                    <div class="instrument-selector-grid">
+                        <label class="instrument-card-option">
+                            <input type="radio" name="instrument" value="Dhol" required>
+                            <div class="instrument-card-content">
+                                <div class="instrument-image-container">
+                                    <img src="images/dhol.jpg" alt="Dhol Player">
+                                </div>
+                                <div class="instrument-info">
+                                    <span class="instrument-title">Dhol</span>
+                                </div>
+                                <div class="checked-badge"><i class="fa-solid fa-circle-check"></i></div>
+                            </div>
+                        </label>
+                        <label class="instrument-card-option">
+                            <input type="radio" name="instrument" value="Tasha" required>
+                            <div class="instrument-card-content">
+                                <div class="instrument-image-container">
+                                    <img src="images/tasha.jpg" alt="Tasha Player">
+                                </div>
+                                <div class="instrument-info">
+                                    <span class="instrument-title">Tasha</span>
+                                </div>
+                                <div class="checked-badge"><i class="fa-solid fa-circle-check"></i></div>
+                            </div>
+                        </label>
+                        <label class="instrument-card-option">
+                            <input type="radio" name="instrument" value="Dhwajdhari" required>
+                            <div class="instrument-card-content">
+                                <div class="instrument-image-container">
+                                    <img src="images/dhwajdhari.jpg" alt="Dhwajdhari Player">
+                                </div>
+                                <div class="instrument-info">
+                                    <span class="instrument-title">Dhwajdhari</span>
+                                </div>
+                                <div class="checked-badge"><i class="fa-solid fa-circle-check"></i></div>
+                            </div>
+                        </label>
+                    </div>
+                    <span class="error-msg" id="instrument-error">Please select an instrument</span>
+                </div>
+
+                <!-- Terms and Conditions -->
+                <div class="input-group terms-group">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="terms" name="terms" required>
+                        <span class="checkmark"></span>
+                        <span class="terms-text">I agree to attend practice sessions regularly and respect troupe rules and regulations.</span>
+                    </label>
+                    <span class="error-msg" id="terms-error">You must accept the terms to enroll</span>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="submit-btn" id="submit-btn">
+                    <span>Send Application</span>
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Success Modal Popup -->
+    <div class="modal-overlay" id="success-modal">
+        <div class="success-card">
+            <div class="success-icon-wrapper">
+                <div class="success-circle">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <!-- Saffron flag animation background -->
+                <span class="decor-flag">🚩</span>
+            </div>
+            <h2>Jai Shivray!</h2>
+            <h3>Thanks for enrolling in SHIVGANDHA DHOL TASHA PATHAK</h3>
+            <p>Your application has been received successfully. Our troupe coordinators will contact you soon for the practice schedule.</p>
+            <button class="modal-close-btn" id="close-modal-btn">Har Har Mahadev!</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Shivgandha Dhol Tasha Pathak. Devoted to tradition and rhythm.</p>
+    </footer>
+
+    <script src="main.js"></script>
+</body>
+</html>

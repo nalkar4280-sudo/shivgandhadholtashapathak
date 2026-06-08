@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shivgandha Troupe Admin Portal</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <!-- Background glows -->
+    <div class="bg-glow orange-glow"></div>
+    <div class="bg-glow gold-glow"></div>
+
+    <!-- Navigation -->
+    <nav class="admin-content hidden">
+        <div class="nav-container">
+            <div class="logo">
+                <img src="images/logo.png" alt="Shivgandha Logo" class="nav-logo">
+                <span class="logo-text">SHIVGANDHA ADMIN</span>
+            </div>
+            <a href="index.html" class="home-link">
+                <i class="fa-solid fa-arrow-left"></i> Application Form
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="dashboard-container admin-content hidden">
+        <!-- Dashboard Header -->
+        <header class="db-header">
+            <div>
+                <h1>Troupe Management Dashboard</h1>
+                <p>Monitor applications, manage troupe lists, and view statistics for Shivgandha Dhol Tasha Pathak.</p>
+            </div>
+            <button id="refresh-btn" class="refresh-btn">
+                <i class="fa-solid fa-rotate-right"></i> Refresh Data
+            </button>
+        </header>
+
+        <!-- Stats Grid -->
+        <section class="stats-grid">
+            <!-- Stat 1: Total Enrolled -->
+            <div class="stat-card">
+                <div class="stat-icon-wrapper blue-icon">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="stat-total">0</h3>
+                    <p>Total Enrolled</p>
+                </div>
+            </div>
+
+            <!-- Stat 2: Dhol Players -->
+            <div class="stat-card">
+                <div class="stat-icon-wrapper orange-icon">
+                    <i class="fa-solid fa-drum"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="stat-dhol">0</h3>
+                    <p>Dhol Players</p>
+                </div>
+            </div>
+
+            <!-- Stat 3: Tasha Players -->
+            <div class="stat-card">
+                <div class="stat-icon-wrapper gold-icon">
+                    <i class="fa-solid fa-drum-steelpan"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="stat-tasha">0</h3>
+                    <p>Tasha Players</p>
+                </div>
+            </div>
+
+            <!-- Stat 4: Dhwajdhari Players -->
+            <div class="stat-card">
+                <div class="stat-icon-wrapper flag-icon">
+                    <i class="fa-solid fa-flag"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="stat-dhwajdhari">0</h3>
+                    <p>Dhwajdhari</p>
+                </div>
+            </div>
+
+            <!-- Stat 5: Female Members -->
+            <div class="stat-card">
+                <div class="stat-icon-wrapper pink-icon">
+                    <i class="fa-solid fa-venus"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="stat-female">0</h3>
+                    <p>Female Enrollees</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filters & Controls Section -->
+        <section class="controls-panel">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="search-input" placeholder="Search by member name...">
+            </div>
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label for="filter-instrument">Instrument</label>
+                    <select id="filter-instrument">
+                        <option value="All">All Instruments</option>
+                        <option value="Dhol">Dhol</option>
+                        <option value="Tasha">Tasha</option>
+                        <option value="Dhwajdhari">Dhwajdhari</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-gender">Gender</label>
+                    <select id="filter-gender">
+                        <option value="All">All Genders</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Enrollees List Card -->
+        <section class="data-card">
+            <div class="card-title">
+                <h2>Enrolled Applicants</h2>
+                <span id="filtered-count" class="badge">0 entries</span>
+            </div>
+            
+            <div class="table-container">
+                <table id="enrollees-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>WhatsApp</th>
+                            <th>Age</th>
+                            <th>Gender</th>
+                            <th>Instrument</th>
+                            <th>Enrollment Date</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Dynamically filled -->
+                        <tr>
+                            <td colspan="7" class="table-empty">
+                                <i class="fa-solid fa-spinner fa-spin empty-icon"></i>
+                                <p>Loading enrollees list...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="admin-content hidden">
+        <p>&copy; 2026 Shivgandha Dhol Tasha Pathak. Troupe Administration Console.</p>
+    </footer>
+
+    <!-- Login Screen Overlay -->
+    <div class="login-overlay active" id="login-overlay">
+        <div class="login-card">
+            <div class="lock-icon-wrapper">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h2>Admin Portal Access</h2>
+            <h3>SHIVGANDHA DHOL TASHA PATHAK</h3>
+            <p>Please enter the administrative passcode to unlock the troupe management console.</p>
+            
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="admin-password">Passcode</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="admin-password" placeholder="Enter password" required autocomplete="off">
+                        <button type="button" class="toggle-password-btn" id="toggle-password" title="Toggle password visibility">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                    <span class="error-msg" id="login-error-msg">Incorrect password. Please try again.</span>
+                </div>
+                
+                <button type="submit" class="login-btn" id="login-btn">
+                    <span>Unlock Dashboard</span>
+                    <i class="fa-solid fa-key"></i>
+                </button>
+            </form>
+            
+            <a href="index.html" class="back-to-site">
+                <i class="fa-solid fa-arrow-left"></i> Back to Registration Form
+            </a>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal (Optional but nice) -->
+    <div class="modal-overlay" id="delete-modal">
+        <div class="confirm-card">
+            <div class="warning-icon-wrapper">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h2>Remove Applicant</h2>
+            <p>Are you sure you want to remove <strong id="delete-target-name">this member</strong> from the enrollment list? This action cannot be undone.</p>
+            <div class="confirm-actions">
+                <button class="confirm-btn cancel" id="cancel-delete-btn">Cancel</button>
+                <button class="confirm-btn delete" id="confirm-delete-btn">Remove</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
