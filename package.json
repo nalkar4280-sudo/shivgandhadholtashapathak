@@ -2,9 +2,9 @@
   "name": "shiv-gandha-enrollment",
   "version": "1.0.0",
   "description": "Enrollment and Admin Portal for Shivgandha Dhol Tasha Pathak",
-  "main": "server.js",
+  "main": "local-server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node local-server.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",
