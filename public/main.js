@@ -74,15 +74,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Camera elements
     const cameraSection = document.getElementById('camera-section');
-    const activateCameraBtn = document.getElementById('activate-camera-btn');
-    const capturePhotoBtn = document.getElementById('capture-photo-btn');
-    const retakePhotoBtn = document.getElementById('retake-photo-btn');
+    const cameraContainerBox = document.getElementById('camera-container-box');
     const cameraStream = document.getElementById('camera-stream');
     const captureCanvas = document.getElementById('capture-canvas');
     const capturedPhoto = document.getElementById('captured-photo');
-    const videoWrapper = document.getElementById('video-wrapper');
-    const photoPreviewWrapper = document.getElementById('photo-preview-wrapper');
-    const cameraErrorPrompt = document.getElementById('camera-error-prompt');
+    const scannerOverlay = document.getElementById('scanner-overlay');
+    const cameraStatusBadge = document.getElementById('camera-status-badge');
     const photoDataInput = document.getElementById('photo-data');
     const photoError = document.getElementById('photo-error');
 
@@ -100,9 +97,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start camera stream
     const startCamera = async () => {
         try {
-            photoError.style.display = 'none';
-            cameraSection.classList.remove('invalid');
-            cameraErrorPrompt.classList.add('hidden');
+            if (photoError) photoError.style.display = 'none';
+            if (cameraSection) cameraSection.classList.remove('invalid');
+            
+            // Clean up any existing stream first
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
             
             stream = await navigator.mediaDevices.getUserMedia({
                 video: {
@@ -114,16 +115,31 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             cameraStream.srcObject = stream;
-            videoWrapper.classList.add('active');
+            cameraStream.style.display = 'block';
+            capturedPhoto.style.display = 'none';
+            if (scannerOverlay) scannerOverlay.style.display = 'flex';
             
-            capturePhotoBtn.classList.remove('hidden');
-            retakePhotoBtn.classList.add('hidden');
+            // Update badge state
+            if (cameraStatusBadge) {
+                cameraStatusBadge.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> Tap to Capture`;
+                cameraStatusBadge.style.background = 'rgba(0, 0, 0, 0.65)';
+                cameraStatusBadge.style.color = 'var(--gold)';
+                cameraStatusBadge.style.border = '1px solid var(--gold-glow)';
+                cameraStatusBadge.style.boxShadow = 'none';
+            }
         } catch (err) {
             console.error('Camera Access Error:', err);
-            // Show custom error prompt if browser blocks or lacks camera
-            cameraErrorPrompt.classList.remove('hidden');
-            capturePhotoBtn.classList.add('hidden');
-            videoWrapper.classList.remove('active');
+            cameraStream.style.display = 'none';
+            capturedPhoto.style.display = 'none';
+            if (scannerOverlay) scannerOverlay.style.display = 'none';
+            
+            if (cameraStatusBadge) {
+                cameraStatusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Access Denied (Tap to Retry)`;
+                cameraStatusBadge.style.background = 'rgba(255, 69, 58, 0.25)';
+                cameraStatusBadge.style.color = 'var(--error-red)';
+                cameraStatusBadge.style.border = '1px solid rgba(255, 69, 58, 0.5)';
+                cameraStatusBadge.style.boxShadow = '0 2px 8px rgba(255, 69, 58, 0.3)';
+            }
         }
     };
 
@@ -134,7 +150,6 @@ document.addEventListener('DOMContentLoaded', () => {
             stream = null;
         }
         cameraStream.srcObject = null;
-        videoWrapper.classList.remove('active');
     };
 
     // Capture photo from stream
@@ -161,35 +176,51 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update previews
         capturedPhoto.src = dataUrl;
-        photoPreviewWrapper.classList.remove('hidden');
-        videoWrapper.classList.add('hidden');
+        capturedPhoto.style.display = 'block';
+        cameraStream.style.display = 'none';
+        if (scannerOverlay) scannerOverlay.style.display = 'none';
         
-        capturePhotoBtn.classList.add('hidden');
-        retakePhotoBtn.classList.remove('hidden');
+        // Update badge state
+        if (cameraStatusBadge) {
+            cameraStatusBadge.innerHTML = `<i class="fa-solid fa-rotate-left"></i> Tap to Retake`;
+            cameraStatusBadge.style.background = 'rgba(48, 209, 88, 0.9)';
+            cameraStatusBadge.style.color = '#000';
+            cameraStatusBadge.style.border = 'none';
+            cameraStatusBadge.style.boxShadow = '0 2px 8px rgba(48, 209, 88, 0.3)';
+        }
         
         stopCamera();
         
         // Remove validation error if present
-        cameraSection.classList.remove('invalid');
+        if (cameraSection) cameraSection.classList.remove('invalid');
     };
 
     // Retake photo
     const retakePhoto = () => {
         photoDataInput.value = '';
         capturedPhoto.src = '';
-        photoPreviewWrapper.classList.add('hidden');
-        videoWrapper.classList.remove('hidden');
-        
-        capturePhotoBtn.classList.remove('hidden');
-        retakePhotoBtn.classList.add('hidden');
+        capturedPhoto.style.display = 'none';
+        cameraStream.style.display = 'block';
+        if (scannerOverlay) scannerOverlay.style.display = 'flex';
         
         startCamera();
     };
 
-    // Bind camera click listeners
-    activateCameraBtn.addEventListener('click', startCamera);
-    capturePhotoBtn.addEventListener('click', capturePhoto);
-    retakePhotoBtn.addEventListener('click', retakePhoto);
+    // Bind unified box click listener
+    if (cameraContainerBox) {
+        cameraContainerBox.addEventListener('click', () => {
+            if (photoDataInput.value) {
+                // Photo captured, tap to retake
+                retakePhoto();
+            } else if (stream) {
+                // Streaming, tap to capture
+                capturePhoto();
+            } else {
+                // Not running (failed or not started), tap to try starting
+                startCamera();
+            }
+        });
+    }
 
     // Automatically initialize camera on load
     startCamera();
@@ -365,12 +396,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Reset camera UI
                 photoDataInput.value = '';
                 capturedPhoto.src = '';
-                photoPreviewWrapper.classList.add('hidden');
-                videoWrapper.classList.remove('hidden');
-                cameraPrompt.classList.remove('hidden');
-                capturePhotoBtn.classList.add('hidden');
-                retakePhotoBtn.classList.add('hidden');
+                capturedPhoto.style.display = 'none';
                 stopCamera();
+                startCamera();
             } else {
                 alert(result.message || 'Something went wrong. Please try again.');
             }

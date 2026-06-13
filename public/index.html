@@ -178,46 +178,31 @@
                 <!-- Live Identity Verification (Camera) -->
                 <div class="input-group camera-verification-group" id="camera-section">
                     <label><i class="fa-solid fa-camera"></i> Live Identity Verification</label>
-                    <p class="camera-info-text">Position your face in the frame and click the capture button.</p>
+                    <p class="camera-info-text">Tap the frame below to capture your photo. Tap again to retake.</p>
                     
                     <div class="camera-widget-container">
-                        <!-- Video stream container -->
-                        <div class="video-preview-wrapper active" id="video-wrapper">
-                            <video id="camera-stream" autoplay playsinline muted></video>
+                        <!-- Unified Interactive Frame -->
+                        <div class="video-preview-wrapper active" id="camera-container-box" style="cursor: pointer; width: 100%; max-width: 320px; height: 240px; border-radius: 12px; border: 2px solid var(--border-color); overflow: hidden; position: relative; background: #000; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 15px var(--saffron-glow);">
+                            <!-- Live Video Stream -->
+                            <video id="camera-stream" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block;"></video>
+                            
+                            <!-- Captured Image overlay (hidden initially) -->
+                            <img id="captured-photo" alt="Captured Identity Preview" style="width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: none; position: absolute; top: 0; left: 0; z-index: 15;">
                             
                             <!-- Scanner guide overlay -->
-                            <div class="scanner-guide">
+                            <div class="scanner-guide" id="scanner-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; justify-content: center; align-items: center; z-index: 10;">
                                 <div class="scan-frame"></div>
                                 <div class="scan-laser"></div>
                             </div>
                             
-                            <!-- Camera Permission/Fallback Error Overlay (Hidden by default) -->
-                            <div class="camera-prompt-overlay hidden" id="camera-error-prompt">
-                                <div class="prompt-icon" style="color: var(--error-red)"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                                <button type="button" class="btn-activate-camera" id="activate-camera-btn">
-                                    <i class="fa-solid fa-rotate"></i> Enable Camera
-                                </button>
+                            <!-- Floating Status Badge -->
+                            <div class="captured-badge-label" id="camera-status-badge" style="position: absolute; bottom: 12px; right: 12px; z-index: 20; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px); border: 1px solid var(--gold-glow); color: var(--gold); padding: 0.35rem 0.75rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.35rem; pointer-events: none; transition: all 0.3s ease;">
+                                <i class="fa-solid fa-hand-pointer"></i> Tap to Capture
                             </div>
-                        </div>
-
-                        <!-- Captured photo preview (hidden initially) -->
-                        <div class="photo-preview-wrapper hidden" id="photo-preview-wrapper">
-                            <img id="captured-photo" alt="Captured Identity Preview">
-                            <div class="captured-badge-label"><i class="fa-solid fa-circle-check"></i> Photo Captured</div>
                         </div>
 
                         <!-- Hidden canvas for capturing frame -->
                         <canvas id="capture-canvas" style="display: none;"></canvas>
-
-                        <!-- Controls -->
-                        <div class="camera-controls">
-                            <button type="button" class="btn-capture" id="capture-photo-btn">
-                                <i class="fa-solid fa-camera"></i> Capture Photo
-                            </button>
-                            <button type="button" class="btn-retake hidden" id="retake-photo-btn">
-                                <i class="fa-solid fa-rotate-left"></i> Retake Photo
-                            </button>
-                        </div>
                     </div>
                     
                     <!-- Hidden input to store image data URL -->
