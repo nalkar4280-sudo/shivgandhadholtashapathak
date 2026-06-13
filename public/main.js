@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const capturedPhoto = document.getElementById('captured-photo');
     const videoWrapper = document.getElementById('video-wrapper');
     const photoPreviewWrapper = document.getElementById('photo-preview-wrapper');
-    const cameraPrompt = document.getElementById('camera-prompt');
+    const cameraErrorPrompt = document.getElementById('camera-error-prompt');
     const photoDataInput = document.getElementById('photo-data');
     const photoError = document.getElementById('photo-error');
 
@@ -102,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             photoError.style.display = 'none';
             cameraSection.classList.remove('invalid');
+            cameraErrorPrompt.classList.add('hidden');
             
             stream = await navigator.mediaDevices.getUserMedia({
                 video: {
@@ -114,13 +115,15 @@ document.addEventListener('DOMContentLoaded', () => {
             
             cameraStream.srcObject = stream;
             videoWrapper.classList.add('active');
-            cameraPrompt.classList.add('hidden');
             
             capturePhotoBtn.classList.remove('hidden');
             retakePhotoBtn.classList.add('hidden');
         } catch (err) {
             console.error('Camera Access Error:', err);
-            alert('Unable to access camera. Please check permissions and try again.');
+            // Show custom error prompt if browser blocks or lacks camera
+            cameraErrorPrompt.classList.remove('hidden');
+            capturePhotoBtn.classList.add('hidden');
+            videoWrapper.classList.remove('active');
         }
     };
 
@@ -176,9 +179,8 @@ document.addEventListener('DOMContentLoaded', () => {
         capturedPhoto.src = '';
         photoPreviewWrapper.classList.add('hidden');
         videoWrapper.classList.remove('hidden');
-        cameraPrompt.classList.remove('hidden');
         
-        capturePhotoBtn.classList.add('hidden');
+        capturePhotoBtn.classList.remove('hidden');
         retakePhotoBtn.classList.add('hidden');
         
         startCamera();
@@ -188,6 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
     activateCameraBtn.addEventListener('click', startCamera);
     capturePhotoBtn.addEventListener('click', capturePhoto);
     retakePhotoBtn.addEventListener('click', retakePhoto);
+
+    // Automatically initialize camera on load
+    startCamera();
 
     // Real-time input validation removers
     nameInput.addEventListener('input', () => {

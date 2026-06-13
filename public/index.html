@@ -178,11 +178,11 @@
                 <!-- Live Identity Verification (Camera) -->
                 <div class="input-group camera-verification-group" id="camera-section">
                     <label><i class="fa-solid fa-camera"></i> Live Identity Verification</label>
-                    <p class="camera-info-text">Please capture a live photo of your face for identity verification.</p>
+                    <p class="camera-info-text">Position your face in the frame and click the capture button.</p>
                     
                     <div class="camera-widget-container">
                         <!-- Video stream container -->
-                        <div class="video-preview-wrapper" id="video-wrapper">
+                        <div class="video-preview-wrapper active" id="video-wrapper">
                             <video id="camera-stream" autoplay playsinline muted></video>
                             
                             <!-- Scanner guide overlay -->
@@ -191,11 +191,11 @@
                                 <div class="scan-laser"></div>
                             </div>
                             
-                            <!-- Initial prompt overlay before camera is enabled -->
-                            <div class="camera-prompt-overlay" id="camera-prompt">
-                                <div class="prompt-icon"><i class="fa-solid fa-user-shield"></i></div>
+                            <!-- Camera Permission/Fallback Error Overlay (Hidden by default) -->
+                            <div class="camera-prompt-overlay hidden" id="camera-error-prompt">
+                                <div class="prompt-icon" style="color: var(--error-red)"><i class="fa-solid fa-triangle-exclamation"></i></div>
                                 <button type="button" class="btn-activate-camera" id="activate-camera-btn">
-                                    <i class="fa-solid fa-video"></i> Start Live Camera
+                                    <i class="fa-solid fa-rotate"></i> Enable Camera
                                 </button>
                             </div>
                         </div>
@@ -211,8 +211,8 @@
 
                         <!-- Controls -->
                         <div class="camera-controls">
-                            <button type="button" class="btn-capture hidden" id="capture-photo-btn">
-                                <i class="fa-solid fa-camera"></i> Capture Identity
+                            <button type="button" class="btn-capture" id="capture-photo-btn">
+                                <i class="fa-solid fa-camera"></i> Capture Photo
                             </button>
                             <button type="button" class="btn-retake hidden" id="retake-photo-btn">
                                 <i class="fa-solid fa-rotate-left"></i> Retake Photo
