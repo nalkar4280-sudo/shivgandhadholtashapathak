@@ -7,10 +7,14 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const PORT = process.env.PORT || 3005;
 
-// Create uploads folder inside public if it doesn't exist
+// Create uploads folder inside public if it doesn't exist (wrapped in try-catch to prevent crashes on Vercel's read-only system)
 const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+try {
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+} catch (err) {
+  console.warn("Warning: Could not create local uploads folder (this is normal on stateless servers like Vercel):", err.message);
 }
 
 // Helper function to save Base64 photo to Supabase Storage and local disk backup
