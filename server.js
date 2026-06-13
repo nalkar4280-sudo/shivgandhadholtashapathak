@@ -13,8 +13,8 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
-// Helper function to save Base64 photo to uploads directory
-const savePhoto = (id, base64Data) => {
+// Helper function to save Base64 photo to Supabase Storage and local disk backup
+const savePhoto = async (id, base64Data) => {
   try {
     if (!base64Data) return;
     // Strip out the data URL scheme if present
@@ -26,11 +26,30 @@ const savePhoto = (id, base64Data) => {
       imageBuffer = Buffer.from(base64Data, 'base64');
     }
     
-    const photoPath = path.join(UPLOADS_DIR, `${id}.jpg`);
-    fs.writeFileSync(photoPath, imageBuffer);
-    console.log(`Saved photo for enrollee ID ${id}`);
+    // 1. Save locally as backup if server filesystem is writable
+    try {
+      const photoPath = path.join(UPLOADS_DIR, `${id}.jpg`);
+      fs.writeFileSync(photoPath, imageBuffer);
+      console.log(`Saved local backup photo for enrollee ID ${id}`);
+    } catch (fsErr) {
+      console.warn(`Warning: Could not write local file backup (normal on Vercel):`, fsErr.message);
+    }
+
+    // 2. Upload to Supabase Storage bucket 'identity-photos'
+    const { data, error } = await supabase.storage
+      .from('identity-photos')
+      .upload(`${id}.jpg`, imageBuffer, {
+        contentType: 'image/jpeg',
+        upsert: true
+      });
+
+    if (error) {
+      console.error(`Error uploading photo to Supabase Storage for ID ${id}:`, error.message);
+    } else {
+      console.log(`Successfully uploaded photo to Supabase Storage for ID ${id}`);
+    }
   } catch (err) {
-    console.error(`Error saving photo for enrollee ID ${id}:`, err);
+    console.error(`Error processing photo for enrollee ID ${id}:`, err);
   }
 };
 
@@ -111,7 +130,7 @@ app.post('/api/enroll', async (req, res) => {
         if (fallbackErr) throw fallbackErr;
         
         if (photo && fallbackRes && fallbackRes[0]) {
-          savePhoto(fallbackRes[0].id, photo);
+          await savePhoto(fallbackRes[0].id, photo);
         }
         
         return res.json({ success: true, message: 'Enrolled successfully!', data: fallbackRes[0] });
@@ -120,7 +139,7 @@ app.post('/api/enroll', async (req, res) => {
     }
 
     if (photo && data && data[0]) {
-      savePhoto(data[0].id, photo);
+      await savePhoto(data[0].id, photo);
     }
 
     res.json({ success: true, message: 'Enrolled successfully!', data: data[0] });
@@ -150,9 +169,35 @@ app.get('/api/enrollees', requireAdminAuth, async (req, res) => {
 
     if (error) throw error;
 
+    // Fetch existing files in the 'identity-photos' storage bucket to check presence
+    let storageFiles = [];
+    try {
+      const { data: listData, error: listError } = await supabase.storage
+        .from('identity-photos')
+        .list('', { limit: 1000 });
+      if (!listError && listData) {
+        storageFiles = listData.map(f => f.name);
+      }
+    } catch (storageErr) {
+      console.warn("Warning: Could not list files from Supabase Storage:", storageErr.message);
+    }
+
     // Map database snake_case fields back to front-end camelCase properties
     const mappedData = (data || []).map(item => {
-      const hasPhoto = fs.existsSync(path.join(UPLOADS_DIR, `${item.id}.jpg`));
+      const photoName = `${item.id}.jpg`;
+      const hasStoragePhoto = storageFiles.includes(photoName);
+      
+      let photoUrl = null;
+      if (hasStoragePhoto) {
+        photoUrl = `https://zztmgekdjpygnaalojrc.supabase.co/storage/v1/object/public/identity-photos/${photoName}`;
+      } else {
+        // Fallback to check local filesystem
+        const hasLocalPhoto = fs.existsSync(path.join(UPLOADS_DIR, photoName));
+        if (hasLocalPhoto) {
+          photoUrl = `/uploads/${photoName}`;
+        }
+      }
+
       return {
         id: item.id,
         name: item.name,
@@ -164,7 +209,7 @@ app.get('/api/enrollees', requireAdminAuth, async (req, res) => {
         enrolledAt: item.enrolled_at,
         parentContact: item.parent_contact,
         bloodGroup: item.blood_group,
-        photoUrl: hasPhoto ? `/uploads/${item.id}.jpg` : null
+        photoUrl: photoUrl
       };
     });
 
@@ -187,14 +232,30 @@ app.delete('/api/enrollees/:id', requireAdminAuth, async (req, res) => {
 
     if (error) throw error;
 
-    // Clean up photo file if it exists
-    const photoPath = path.join(UPLOADS_DIR, `${id}.jpg`);
+    const photoName = `${id}.jpg`;
+
+    // 1. Delete from Supabase Storage
+    try {
+      const { error: storageDelError } = await supabase.storage
+        .from('identity-photos')
+        .remove([photoName]);
+      if (storageDelError) {
+        console.error(`Error deleting photo from Supabase Storage:`, storageDelError.message);
+      } else {
+        console.log(`Deleted photo from Supabase Storage for ID ${id}`);
+      }
+    } catch (storageErr) {
+      console.error(`Failed to connect to Supabase Storage for deletion:`, storageErr.message);
+    }
+
+    // 2. Clean up local backup photo file if it exists
+    const photoPath = path.join(UPLOADS_DIR, photoName);
     if (fs.existsSync(photoPath)) {
       try {
         fs.unlinkSync(photoPath);
-        console.log(`Deleted photo for enrollee ID ${id}`);
+        console.log(`Deleted local photo backup for enrollee ID ${id}`);
       } catch (err) {
-        console.error(`Error deleting photo file for ID ${id}:`, err);
+        console.error(`Error deleting local photo backup for ID ${id}:`, err);
       }
     }
 
