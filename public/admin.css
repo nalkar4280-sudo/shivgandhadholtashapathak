@@ -1300,3 +1300,40 @@ footer {
             #fff 7.5px, #fff 9px) !important;
     }
 }
+
+/* Responsive adjustments for ID Card modal and Home link on mobile viewports */
+@media (max-width: 380px) {
+    .nav-container {
+        padding: 0.75rem 0.75rem;
+    }
+    .logo-text {
+        font-size: 1.15rem;
+    }
+    .home-link span {
+        display: none;
+    }
+    .home-link {
+        padding: 0.55rem;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .home-link i {
+        margin: 0;
+        font-size: 0.95rem;
+    }
+    .id-card-wrapper {
+        transform: scale(0.85);
+        margin: -35px 0;
+    }
+}
+
+@media (max-width: 340px) {
+    .id-card-wrapper {
+        transform: scale(0.76);
+        margin: -55px 0;
+    }
+}

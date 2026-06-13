@@ -696,8 +696,8 @@ footer {
 /* Responsive details */
 @media (max-width: 580px) {
     .enrollment-card {
-        padding: 2rem 1.5rem;
-        border-radius: 16px;
+        padding: 2.5rem 1.75rem;
+        border-radius: 18px;
     }
     
     .form-row {
@@ -727,29 +727,31 @@ footer {
     .card-header h1 {
         font-size: 1.8rem;
     }
+
+    .instrument-selector-grid {
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 0.85rem;
+    }
 }
 
 @media (max-width: 480px) {
-    .instrument-selector-grid {
-        grid-template-columns: 1fr;
-        gap: 0.85rem;
-    }
-    .instrument-image-container {
-        height: 80px; /* Decreased size */
-    }
     .nav-container {
-        padding: 0.8rem 1.2rem;
+        padding: 0.8rem 1rem;
     }
     .logo-text {
-        font-size: 1.4rem;
+        font-size: 1.35rem;
         letter-spacing: 1px;
     }
     .admin-link {
-        padding: 0.4rem 0.9rem;
+        padding: 0.45rem 0.85rem;
         font-size: 0.8rem;
     }
     .enrollment-card {
         padding: 1.75rem 1.25rem;
+        border-radius: 14px;
+    }
+    .card-header h1 {
+        font-size: 1.6rem;
     }
     .card-header p {
         font-size: 0.85rem;
@@ -766,6 +768,34 @@ footer {
     .success-card p {
         font-size: 0.85rem;
         margin-bottom: 1.5rem;
+    }
+    .instrument-image-container {
+        height: 85px;
+    }
+}
+
+@media (max-width: 380px) {
+    .nav-container {
+        padding: 0.75rem 0.75rem;
+    }
+    .logo-text {
+        font-size: 1.15rem;
+    }
+    .admin-link span {
+        display: none;
+    }
+    .admin-link {
+        padding: 0.55rem;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .admin-link i {
+        margin: 0;
+        font-size: 0.95rem;
     }
 }
 
