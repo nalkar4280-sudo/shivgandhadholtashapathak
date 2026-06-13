@@ -66,6 +66,29 @@ const supabaseUrl = 'https://zztmgekdjpygnaalojrc.supabase.co';
 const supabaseKey = 'sb_publishable_okeZciLTaImpoCI3sfqdAw_fFZRIeXg';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Attempt to initialize storage bucket programmatically
+const initBucket = async () => {
+  try {
+    const { data, error } = await supabase.storage.createBucket('identity-photos', {
+      public: true,
+      fileSizeLimit: 10485760, // 10MB
+      allowedMimeTypes: ['image/jpeg', 'image/png']
+    });
+    if (error) {
+      if (error.message && error.message.includes('already exists')) {
+        console.log("Supabase storage bucket 'identity-photos' already exists.");
+      } else {
+        console.warn("Warning: Could not create Supabase storage bucket programmatically:", error.message);
+      }
+    } else {
+      console.log("Successfully created Supabase storage bucket 'identity-photos'.");
+    }
+  } catch (err) {
+    console.warn("Warning: Failed programmatically creating Supabase bucket:", err.message);
+  }
+};
+initBucket();
+
 // Middleware to verify admin session
 function requireAdminAuth(req, res, next) {
   const authHeader = req.headers['authorization'];
