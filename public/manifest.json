@@ -1,0 +1,22 @@
+{
+  "name": "Shivgandha Dhol Tasha Pathak",
+  "short_name": "Shivgandha",
+  "description": "Enrollment and Admin Portal for Shivgandha Dhol Tasha Pathak",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0d0d0f",
+  "theme_color": "#ff6f00",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

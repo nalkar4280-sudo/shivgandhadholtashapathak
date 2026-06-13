@@ -1,3 +1,12 @@
+// Register Service Worker for PWA (Installable App)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service Worker registered successfully!', reg.scope))
+            .catch(err => console.log('Service Worker registration failed:', err));
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // In-memory admin authentication token (automatically wiped on page refresh)
     let adminToken = null;
@@ -60,6 +69,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteTargetNameSpan = document.getElementById('delete-target-name');
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
     const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+
+    // ID Card View Modal Elements
+    const idCardModal = document.getElementById('id-card-modal');
+    const closeCardBtn = document.getElementById('close-card-btn');
+    const printCardBtn = document.getElementById('print-card-btn');
+    const downloadPhotoBtn = document.getElementById('download-photo-btn');
+    
+    // ID Card content elements
+    const idCardPhoto = document.getElementById('id-card-photo');
+    const idCardName = document.getElementById('id-card-name');
+    const idCardInstrument = document.getElementById('id-card-instrument');
+    const idCardBlood = document.getElementById('id-card-blood');
+    const idCardAgeGender = document.getElementById('id-card-age-gender');
+    const idCardId = document.getElementById('id-card-id');
+    const idCardContact = document.getElementById('id-card-contact');
+    const idCardParent = document.getElementById('id-card-parent');
+    const idCardBarcodeVal = document.getElementById('id-card-barcode-val');
 
     // Auth Screen elements
     const loginOverlay = document.getElementById('login-overlay');
@@ -234,9 +260,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const parentContactLink = e.parentContact ? `<a href="tel:+91${e.parentContact}" class="phone-link" title="Call Parent"><i class="fa-solid fa-phone"></i> ${escapeHTML(e.parentContact)}</a>` : 'N/A';
             const bloodGroupTag = e.bloodGroup ? `<span class="blood-group-tag"><i class="fa-solid fa-droplet"></i> ${escapeHTML(e.bloodGroup)}</span>` : 'N/A';
             
+            // Avatar Column Setup
+            let avatarHTML = '';
+            if (e.photoUrl) {
+                avatarHTML = `<img class="member-avatar" src="${e.photoUrl}" alt="${escapeHTML(e.name)}" data-id="${e.id}" title="Click to view Identity Card">`;
+            } else {
+                avatarHTML = `<span class="member-initials-avatar avatar-${e.instrument ? e.instrument.toLowerCase() : 'fallback'}" data-id="${e.id}" title="Click to view Identity Card">${getInitials(e.name)}</span>`;
+            }
+
             return `
                 <tr>
-                    <td><span class="member-name">${escapeHTML(e.name)}</span></td>
+                    <td>
+                        <div class="member-profile-cell">
+                            ${avatarHTML}
+                            <span class="clickable-name member-name" data-id="${e.id}" title="Click to view Identity Card">${escapeHTML(e.name)}</span>
+                        </div>
+                    </td>
                     <td>${whatsappLink}</td>
                     <td>${parentContactLink}</td>
                     <td>${e.age} yrs</td>
@@ -256,10 +295,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Attach event listeners to newly created delete buttons
         document.querySelectorAll('.delete-action-btn').forEach(btn => {
             btn.addEventListener('click', (event) => {
+                event.stopPropagation();
                 const button = event.currentTarget;
                 deleteTargetId = button.getAttribute('data-id');
                 deleteTargetNameSpan.textContent = button.getAttribute('data-name');
                 deleteModal.classList.add('active');
+            });
+        });
+
+        // Attach event listeners to avatars & names to open ID Card Modal
+        document.querySelectorAll('.member-avatar, .member-initials-avatar, .clickable-name').forEach(el => {
+            el.addEventListener('click', (event) => {
+                const id = event.currentTarget.getAttribute('data-id');
+                openIdCard(id);
             });
         });
     }
@@ -404,6 +452,79 @@ document.addEventListener('DOMContentLoaded', () => {
     adminPasswordInput.addEventListener('input', () => {
         loginForm.querySelector('.input-group').classList.remove('invalid');
         loginErrorMsg.style.display = 'none';
+    });
+
+    // Helper to calculate initials
+    function getInitials(name) {
+        if (!name) return 'SG';
+        const parts = name.trim().split(/\s+/);
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+        return parts[0].substring(0, 2).toUpperCase();
+    }
+
+    // Open Glassmorphic Identity Card Modal
+    function openIdCard(id) {
+        const e = enrollees.find(x => x.id === id);
+        if (!e) return;
+        
+        // Fill card values
+        idCardName.textContent = e.name;
+        idCardInstrument.textContent = e.instrument;
+        
+        // Set instrument badge class
+        idCardInstrument.className = `value badge-instrument inst-${e.instrument.toLowerCase()}`;
+        
+        idCardBlood.textContent = e.bloodGroup || 'N/A';
+        idCardAgeGender.textContent = `${e.age} yrs / ${e.gender}`;
+        
+        // Format display ID
+        const displayIdStr = String(e.id).substring(Math.max(0, String(e.id).length - 4));
+        idCardId.textContent = `SG-2026-${displayIdStr}`;
+        
+        idCardContact.textContent = e.contact ? `+91 ${e.contact}` : 'N/A';
+        idCardParent.textContent = e.parentContact ? `+91 ${e.parentContact}` : 'N/A';
+        
+        // Set photo or fallback
+        if (e.photoUrl) {
+            idCardPhoto.src = e.photoUrl;
+            
+            // Set download button properties
+            downloadPhotoBtn.href = e.photoUrl;
+            downloadPhotoBtn.download = `${e.name.toLowerCase().replace(/\s+/g, '_')}_photo.jpg`;
+            downloadPhotoBtn.style.display = 'inline-flex';
+        } else {
+            const fallbackSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="110" height="135" viewBox="0 0 110 135"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" font-size="24" fill="%23777" font-family="Outfit, sans-serif" font-weight="bold" dominant-baseline="middle" text-anchor="middle">${getInitials(e.name)}</text></svg>`;
+            idCardPhoto.src = fallbackSvg;
+            
+            // Allow download of initials SVG card photo
+            downloadPhotoBtn.href = fallbackSvg;
+            downloadPhotoBtn.download = `${e.name.toLowerCase().replace(/\s+/g, '_')}_avatar.svg`;
+            downloadPhotoBtn.style.display = 'inline-flex';
+        }
+        
+        idCardBarcodeVal.textContent = `SG2026${e.id}`;
+        idCardModal.classList.add('active');
+    }
+
+    function closeIdCard() {
+        idCardModal.classList.remove('active');
+        idCardPhoto.src = '';
+        downloadPhotoBtn.href = '#';
+    }
+
+    // Bind ID Card Close / Print triggers
+    closeCardBtn.addEventListener('click', closeIdCard);
+    
+    idCardModal.addEventListener('click', (e) => {
+        if (e.target === idCardModal) {
+            closeIdCard();
+        }
+    });
+
+    printCardBtn.addEventListener('click', () => {
+        window.print();
     });
 
     // Initial load check

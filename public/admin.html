@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shivgandha Troupe Admin Portal</title>
+    <!-- PWA Config -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ff6f00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Shivgandha Admin">
+    <link rel="apple-touch-icon" href="images/logo.png">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -200,6 +208,98 @@
             <a href="index.html" class="back-to-site">
                 <i class="fa-solid fa-arrow-left"></i> Back to Registration Form
             </a>
+        </div>
+    </div>
+
+    <!-- Identity Card View Modal -->
+    <div class="modal-overlay" id="id-card-modal">
+        <div class="id-card-wrapper">
+            <div class="id-card-controls">
+                <button class="id-control-btn print-btn" id="print-card-btn" title="Print Identity Card">
+                    <i class="fa-solid fa-print"></i> Print Card
+                </button>
+                <a class="id-control-btn download-btn" id="download-photo-btn" title="Download Member Photo" href="#" download>
+                    <i class="fa-solid fa-download"></i> Download Photo
+                </a>
+                <button class="id-control-btn close-btn" id="close-card-btn" title="Close Modal">
+                    <i class="fa-solid fa-xmark"></i> Close
+                </button>
+            </div>
+            
+            <div class="id-card" id="identity-card-element">
+                <!-- Card Header -->
+                <div class="id-card-header">
+                    <img src="images/logo.png" alt="Shivgandha Logo" class="id-card-logo">
+                    <div class="id-card-header-text">
+                        <h2>SHIVGANDHA</h2>
+                        <h1>DHOL TASHA PATHAK</h1>
+                        <p>MEMBER IDENTITY CARD</p>
+                    </div>
+                    <span class="id-card-flag">🚩</span>
+                </div>
+                
+                <!-- Card Body -->
+                <div class="id-card-body">
+                    <!-- Left: Photo & Verification Status -->
+                    <div class="id-card-photo-sec">
+                        <div class="id-photo-frame">
+                            <img id="id-card-photo" src="" alt="Member Photo">
+                        </div>
+                        <div class="id-verify-badge">
+                            <i class="fa-solid fa-shield-halved"></i> VERIFIED
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Member Info -->
+                    <div class="id-card-info-sec">
+                        <div class="id-info-row name-row">
+                            <span class="label">MEMBER NAME</span>
+                            <span class="value" id="id-card-name">Akshay Nalkar</span>
+                        </div>
+                        
+                        <div class="id-info-grid">
+                            <div class="id-info-row">
+                                <span class="label">INSTRUMENT</span>
+                                <span class="value badge-instrument" id="id-card-instrument">Tasha</span>
+                            </div>
+                            <div class="id-info-row">
+                                <span class="label">BLOOD GP</span>
+                                <span class="value" id="id-card-blood">O+</span>
+                            </div>
+                            <div class="id-info-row">
+                                <span class="label">AGE / GENDER</span>
+                                <span class="value" id="id-card-age-gender">18 yrs / Male</span>
+                            </div>
+                            <div class="id-info-row">
+                                <span class="label">MEMBER ID</span>
+                                <span class="value text-gold" id="id-card-id">SG-2026-103</span>
+                            </div>
+                        </div>
+
+                        <div class="id-info-row">
+                            <span class="label">WHATSAPP NUMBER</span>
+                            <span class="value" id="id-card-contact">9518527436</span>
+                        </div>
+                        
+                        <div class="id-info-row">
+                            <span class="label">EMERGENCY CONTACT</span>
+                            <span class="value" id="id-card-parent">9876543210</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Card Footer (Barcode & Security) -->
+                <div class="id-card-footer">
+                    <div class="barcode-area">
+                        <div class="barcode-strip"></div>
+                        <span class="barcode-text" id="id-card-barcode-val">SG20261780779963534</span>
+                    </div>
+                    <div class="footer-seal">
+                        <p class="seal-motto">HAR HAR MAHADEV</p>
+                        <p class="seal-year">ESTD. 2026</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

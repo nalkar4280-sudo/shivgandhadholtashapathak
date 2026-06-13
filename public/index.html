@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shivgandha Dhol Tasha Pathak - Enrollment</title>
+    <!-- PWA Config -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ff6f00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Shivgandha">
+    <link rel="apple-touch-icon" href="images/logo.png">
+    
     <!-- Google Fonts for Traditional & Modern mix -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -165,6 +173,56 @@
                         </label>
                     </div>
                     <span class="error-msg" id="instrument-error">Please select an instrument</span>
+                </div>
+
+                <!-- Live Identity Verification (Camera) -->
+                <div class="input-group camera-verification-group" id="camera-section">
+                    <label><i class="fa-solid fa-camera"></i> Live Identity Verification</label>
+                    <p class="camera-info-text">Please capture a live photo of your face for identity verification.</p>
+                    
+                    <div class="camera-widget-container">
+                        <!-- Video stream container -->
+                        <div class="video-preview-wrapper" id="video-wrapper">
+                            <video id="camera-stream" autoplay playsinline muted></video>
+                            
+                            <!-- Scanner guide overlay -->
+                            <div class="scanner-guide">
+                                <div class="scan-frame"></div>
+                                <div class="scan-laser"></div>
+                            </div>
+                            
+                            <!-- Initial prompt overlay before camera is enabled -->
+                            <div class="camera-prompt-overlay" id="camera-prompt">
+                                <div class="prompt-icon"><i class="fa-solid fa-user-shield"></i></div>
+                                <button type="button" class="btn-activate-camera" id="activate-camera-btn">
+                                    <i class="fa-solid fa-video"></i> Start Live Camera
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Captured photo preview (hidden initially) -->
+                        <div class="photo-preview-wrapper hidden" id="photo-preview-wrapper">
+                            <img id="captured-photo" alt="Captured Identity Preview">
+                            <div class="captured-badge-label"><i class="fa-solid fa-circle-check"></i> Photo Captured</div>
+                        </div>
+
+                        <!-- Hidden canvas for capturing frame -->
+                        <canvas id="capture-canvas" style="display: none;"></canvas>
+
+                        <!-- Controls -->
+                        <div class="camera-controls">
+                            <button type="button" class="btn-capture hidden" id="capture-photo-btn">
+                                <i class="fa-solid fa-camera"></i> Capture Identity
+                            </button>
+                            <button type="button" class="btn-retake hidden" id="retake-photo-btn">
+                                <i class="fa-solid fa-rotate-left"></i> Retake Photo
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden input to store image data URL -->
+                    <input type="hidden" id="photo-data" name="photo" required>
+                    <span class="error-msg" id="photo-error">Identity verification photo is required</span>
                 </div>
 
                 <!-- Terms and Conditions -->

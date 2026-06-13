@@ -885,3 +885,418 @@ footer {
 .blood-group-tag i {
     font-size: 0.9rem;
 }
+
+/* Enrollee Avatar Styles in Table */
+.member-profile-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.member-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.member-avatar:hover {
+    transform: scale(1.18);
+    border-color: var(--saffron);
+    box-shadow: 0 0 12px var(--saffron-glow);
+}
+
+.member-initials-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--border-color);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.member-initials-avatar:hover {
+    transform: scale(1.18);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+}
+
+/* Colors for initials avatars based on instruments */
+.avatar-dhol { background: linear-gradient(135deg, var(--saffron), #cc5200); }
+.avatar-tasha { background: linear-gradient(135deg, var(--gold), #cc8800); }
+.avatar-dhwajdhari { background: linear-gradient(135deg, #30d158, #1c8c34); }
+.avatar-fallback { background: linear-gradient(135deg, #0a84ff, #0056b3); }
+
+.clickable-name {
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.clickable-name:hover {
+    color: var(--gold);
+    text-shadow: 0 0 8px var(--gold-glow);
+}
+
+/* Glassmorphic Identity Card Modal Layout */
+.id-card-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 360px;
+    width: 90%;
+    transform: scale(0.9);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-overlay.active .id-card-wrapper {
+    transform: scale(1);
+}
+
+.id-card-controls {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.id-control-btn {
+    padding: 0.55rem 1.1rem;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    outline: none;
+}
+
+.id-control-btn.print-btn {
+    background: var(--saffron);
+    color: #000;
+    border: none;
+    box-shadow: 0 4px 10px var(--saffron-glow);
+}
+
+.id-control-btn.print-btn:hover {
+    background: var(--gold);
+    transform: translateY(-2px);
+}
+
+.id-control-btn.close-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.id-control-btn.close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--error-red);
+    border-color: rgba(255, 69, 58, 0.3);
+}
+
+.id-control-btn.download-btn {
+    background: rgba(10, 132, 255, 0.15);
+    color: #0a84ff;
+    border: 1px solid rgba(10, 132, 255, 0.3);
+    text-decoration: none;
+}
+
+.id-control-btn.download-btn:hover {
+    background: #0a84ff;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(10, 132, 255, 0.3);
+}
+
+/* ID Card Base Styling */
+.id-card {
+    background: linear-gradient(135deg, rgba(20, 20, 25, 0.95), rgba(10, 10, 12, 0.98));
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    width: 100%;
+    height: 520px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 25px var(--saffron-glow);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Orange flag accent watermark */
+.id-card::before {
+    content: '';
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, var(--saffron-glow) 0%, transparent 70%);
+    top: -50px;
+    right: -50px;
+    pointer-events: none;
+}
+
+/* Card Header */
+.id-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 2px solid rgba(255, 111, 0, 0.4);
+    padding-bottom: 0.85rem;
+    margin-bottom: 1.25rem;
+}
+
+.id-card-logo {
+    height: 48px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 4px rgba(255, 111, 0, 0.5));
+}
+
+.id-card-header-text {
+    flex: 1;
+}
+
+.id-card-header-text h2 {
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    color: var(--gold);
+    margin-bottom: 0.1rem;
+    font-weight: 700;
+}
+
+.id-card-header-text h1 {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+    margin-bottom: 0.1rem;
+}
+
+.id-card-header-text p {
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.id-card-flag {
+    font-size: 1.6rem;
+    transform: rotate(10deg);
+}
+
+/* Card Body */
+.id-card-body {
+    display: flex;
+    gap: 1.25rem;
+    flex: 1;
+}
+
+/* Photo area */
+.id-card-photo-sec {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    width: 110px;
+}
+
+.id-photo-frame {
+    width: 110px;
+    height: 135px;
+    border-radius: 10px;
+    border: 2px solid var(--saffron);
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+#id-card-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.id-verify-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--success-green);
+    background: rgba(48, 209, 88, 0.1);
+    border: 1px solid rgba(48, 209, 88, 0.25);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    letter-spacing: 0.5px;
+}
+
+/* Member info area */
+.id-card-info-sec {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.id-info-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.id-info-row.name-row {
+    margin-bottom: 0.15rem;
+}
+
+.id-info-row.name-row .value {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    text-transform: capitalize;
+}
+
+.id-info-row .label {
+    font-size: 0.58rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    font-weight: bold;
+}
+
+.id-info-row .value {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.id-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+}
+
+.text-gold {
+    color: var(--gold) !important;
+}
+
+/* Card Footer */
+.id-card-footer {
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    padding-top: 0.85rem;
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.barcode-area {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.barcode-strip {
+    height: 24px;
+    width: 175px;
+    background: repeating-linear-gradient(90deg, 
+        #fff, #fff 1.5px, 
+        #000 1.5px, #000 3px, 
+        #fff 3px, #fff 4.5px, 
+        #000 4.5px, #000 6.5px, 
+        #fff 6.5px, #fff 7.5px, 
+        #000 7.5px, #000 9px);
+    filter: invert(0.9); /* White stripes on dark background */
+    border-radius: 2px;
+}
+
+.barcode-text {
+    font-family: monospace;
+    font-size: 0.55rem;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+}
+
+.footer-seal {
+    text-align: right;
+}
+
+.seal-motto {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    font-weight: bold;
+}
+
+.seal-year {
+    font-size: 0.52rem;
+    color: var(--text-secondary);
+    margin-top: 0.15rem;
+    letter-spacing: 0.5px;
+}
+
+/* Print Layout Stylesheet */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #id-card-modal,
+    #id-card-modal * {
+        visibility: visible;
+    }
+    #id-card-modal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: auto;
+        background: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        padding: 0;
+        margin: 0;
+        display: block !important;
+        opacity: 1 !important;
+        pointer-events: none;
+    }
+    .id-card-controls {
+        display: none !important;
+    }
+    .id-card {
+        position: absolute;
+        left: 50%;
+        top: 50px;
+        transform: translateX(-50%) !important;
+        box-shadow: none !important;
+        border: 1px solid #000 !important;
+        background: #000 !important;
+        color: #fff !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+    .barcode-strip {
+        filter: invert(0) !important; /* Proper black lines for paper print */
+        background: repeating-linear-gradient(90deg, 
+            #000, #000 1.5px, 
+            #fff 1.5px, #fff 3px, 
+            #000 3px, #000 4.5px, 
+            #fff 4.5px, #fff 6.5px, 
+            #000 6.5px, #000 7.5px, 
+            #fff 7.5px, #fff 9px) !important;
+    }
+}

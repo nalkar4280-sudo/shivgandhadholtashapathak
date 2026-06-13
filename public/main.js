@@ -1,3 +1,12 @@
+// Register Service Worker for PWA (Installable App)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service Worker registered successfully!', reg.scope))
+            .catch(err => console.log('Service Worker registration failed:', err));
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Preloader fadeout logic
     const preloader = document.getElementById('preloader');
@@ -63,6 +72,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const bloodGroupInput = document.getElementById('blood-group');
     const termsCheckbox = document.getElementById('terms');
 
+    // Camera elements
+    const cameraSection = document.getElementById('camera-section');
+    const activateCameraBtn = document.getElementById('activate-camera-btn');
+    const capturePhotoBtn = document.getElementById('capture-photo-btn');
+    const retakePhotoBtn = document.getElementById('retake-photo-btn');
+    const cameraStream = document.getElementById('camera-stream');
+    const captureCanvas = document.getElementById('capture-canvas');
+    const capturedPhoto = document.getElementById('captured-photo');
+    const videoWrapper = document.getElementById('video-wrapper');
+    const photoPreviewWrapper = document.getElementById('photo-preview-wrapper');
+    const cameraPrompt = document.getElementById('camera-prompt');
+    const photoDataInput = document.getElementById('photo-data');
+    const photoError = document.getElementById('photo-error');
+
+    let stream = null;
+
     // Error message containers
     const nameError = document.getElementById('name-error');
     const contactError = document.getElementById('contact-error');
@@ -71,6 +96,98 @@ document.addEventListener('DOMContentLoaded', () => {
     const bloodGroupError = document.getElementById('blood-group-error');
     const instrumentError = document.getElementById('instrument-error');
     const termsError = document.getElementById('terms-error');
+
+    // Start camera stream
+    const startCamera = async () => {
+        try {
+            photoError.style.display = 'none';
+            cameraSection.classList.remove('invalid');
+            
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'user',
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                },
+                audio: false
+            });
+            
+            cameraStream.srcObject = stream;
+            videoWrapper.classList.add('active');
+            cameraPrompt.classList.add('hidden');
+            
+            capturePhotoBtn.classList.remove('hidden');
+            retakePhotoBtn.classList.add('hidden');
+        } catch (err) {
+            console.error('Camera Access Error:', err);
+            alert('Unable to access camera. Please check permissions and try again.');
+        }
+    };
+
+    // Stop camera stream
+    const stopCamera = () => {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+        cameraStream.srcObject = null;
+        videoWrapper.classList.remove('active');
+    };
+
+    // Capture photo from stream
+    const capturePhoto = () => {
+        if (!stream) return;
+        
+        const videoWidth = cameraStream.videoWidth || 640;
+        const videoHeight = cameraStream.videoHeight || 480;
+        
+        captureCanvas.width = videoWidth;
+        captureCanvas.height = videoHeight;
+        
+        const ctx = captureCanvas.getContext('2d');
+        
+        // Mirror the canvas draw to match mirrored video feed
+        ctx.translate(videoWidth, 0);
+        ctx.scale(-1, 1);
+        
+        ctx.drawImage(cameraStream, 0, 0, videoWidth, videoHeight);
+        
+        // Convert to base64 jpeg
+        const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.85);
+        photoDataInput.value = dataUrl;
+        
+        // Update previews
+        capturedPhoto.src = dataUrl;
+        photoPreviewWrapper.classList.remove('hidden');
+        videoWrapper.classList.add('hidden');
+        
+        capturePhotoBtn.classList.add('hidden');
+        retakePhotoBtn.classList.remove('hidden');
+        
+        stopCamera();
+        
+        // Remove validation error if present
+        cameraSection.classList.remove('invalid');
+    };
+
+    // Retake photo
+    const retakePhoto = () => {
+        photoDataInput.value = '';
+        capturedPhoto.src = '';
+        photoPreviewWrapper.classList.add('hidden');
+        videoWrapper.classList.remove('hidden');
+        cameraPrompt.classList.remove('hidden');
+        
+        capturePhotoBtn.classList.add('hidden');
+        retakePhotoBtn.classList.add('hidden');
+        
+        startCamera();
+    };
+
+    // Bind camera click listeners
+    activateCameraBtn.addEventListener('click', startCamera);
+    capturePhotoBtn.addEventListener('click', capturePhoto);
+    retakePhotoBtn.addEventListener('click', retakePhoto);
 
     // Real-time input validation removers
     nameInput.addEventListener('input', () => {
@@ -185,6 +302,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('input[name="instrument"]').closest('.input-group').classList.remove('invalid');
         }
 
+        // Photo Validation
+        if (photoDataInput.value === '') {
+            cameraSection.classList.add('invalid');
+            isValid = false;
+        } else {
+            cameraSection.classList.remove('invalid');
+        }
+
         // Terms Checkbox Validation
         if (!termsCheckbox.checked) {
             termsCheckbox.closest('.input-group').classList.add('invalid');
@@ -207,7 +332,8 @@ document.addEventListener('DOMContentLoaded', () => {
             age: ageVal,
             gender: genderInput ? genderInput.value : 'Male',
             instrument: selectedInstrument ? selectedInstrument.value : '',
-            termsAccepted: termsCheckbox.checked
+            termsAccepted: termsCheckbox.checked,
+            photo: photoDataInput.value
         };
 
         // Disable Submit Button and show loading state
@@ -231,6 +357,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 successModal.classList.add('active');
                 // Reset Form
                 form.reset();
+                // Reset camera UI
+                photoDataInput.value = '';
+                capturedPhoto.src = '';
+                photoPreviewWrapper.classList.add('hidden');
+                videoWrapper.classList.remove('hidden');
+                cameraPrompt.classList.remove('hidden');
+                capturePhotoBtn.classList.add('hidden');
+                retakePhotoBtn.classList.add('hidden');
+                stopCamera();
             } else {
                 alert(result.message || 'Something went wrong. Please try again.');
             }
