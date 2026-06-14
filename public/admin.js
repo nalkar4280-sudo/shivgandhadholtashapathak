@@ -263,7 +263,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Avatar Column Setup
             let avatarHTML = '';
             if (e.photoUrl) {
-                avatarHTML = `<img class="member-avatar" src="${e.photoUrl}" alt="${escapeHTML(e.name)}" data-id="${e.id}" title="Click to view Identity Card">`;
+                const initials = getInitials(e.name);
+                const fallbackClass = `avatar-${e.instrument ? e.instrument.toLowerCase() : 'fallback'}`;
+                avatarHTML = `<img class="member-avatar" src="${e.photoUrl}" alt="${escapeHTML(e.name)}" data-id="${e.id}" title="Click to view Identity Card" onerror="this.outerHTML='<span class=\\'member-initials-avatar ${fallbackClass}\\' data-id=\\'${e.id}\\' title=\\'Click to view Identity Card\\'>${initials}</span>'">`;
             } else {
                 avatarHTML = `<span class="member-initials-avatar avatar-${e.instrument ? e.instrument.toLowerCase() : 'fallback'}" data-id="${e.id}" title="Click to view Identity Card">${getInitials(e.name)}</span>`;
             }
@@ -490,11 +492,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.photoUrl) {
             idCardPhoto.src = e.photoUrl;
             
+            // Handle loading error to display SVG fallback on ID card
+            idCardPhoto.onerror = () => {
+                const fallbackSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="110" height="135" viewBox="0 0 110 135"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" font-size="24" fill="%23777" font-family="Outfit, sans-serif" font-weight="bold" dominant-baseline="middle" text-anchor="middle">${getInitials(e.name)}</text></svg>`;
+                idCardPhoto.src = fallbackSvg;
+                downloadPhotoBtn.href = fallbackSvg;
+                downloadPhotoBtn.download = `${e.name.toLowerCase().replace(/\s+/g, '_')}_avatar.svg`;
+                idCardPhoto.onerror = null; // Prevent loop
+            };
+            
             // Set download button properties
             downloadPhotoBtn.href = e.photoUrl;
             downloadPhotoBtn.download = `${e.name.toLowerCase().replace(/\s+/g, '_')}_photo.jpg`;
             downloadPhotoBtn.style.display = 'inline-flex';
         } else {
+            idCardPhoto.onerror = null;
             const fallbackSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="110" height="135" viewBox="0 0 110 135"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" font-size="24" fill="%23777" font-family="Outfit, sans-serif" font-weight="bold" dominant-baseline="middle" text-anchor="middle">${getInitials(e.name)}</text></svg>`;
             idCardPhoto.src = fallbackSvg;
             
@@ -507,10 +519,11 @@ document.addEventListener('DOMContentLoaded', () => {
         idCardBarcodeVal.textContent = `SG2026${e.id}`;
         idCardModal.classList.add('active');
     }
-
+ 
     function closeIdCard() {
         idCardModal.classList.remove('active');
         idCardPhoto.src = '';
+        idCardPhoto.onerror = null;
         downloadPhotoBtn.href = '#';
     }
 

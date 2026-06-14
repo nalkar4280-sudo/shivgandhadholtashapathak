@@ -82,6 +82,13 @@ const initBucket = async () => {
         console.log("Supabase storage bucket 'identity-photos' already exists.");
       } else {
         console.warn("Warning: Could not create Supabase storage bucket programmatically:", error.message);
+        console.warn("\n=================================================================================");
+        console.warn("IMPORTANT FOR DEPLOYMENT:");
+        console.warn("Since you are using a client/publishable key, the server cannot create storage buckets.");
+        console.warn("Please log into your Supabase Dashboard (https://supabase.com) and manually set up:");
+        console.warn("  1. Create a public bucket named 'identity-photos'");
+        console.warn("  2. Add RLS Policies to allow Select (read) and Insert/Update (write) for public / anonymous users.");
+        console.warn("=================================================================================\n");
       }
     } else {
       console.log("Successfully created Supabase storage bucket 'identity-photos'.");
@@ -121,7 +128,8 @@ app.post('/api/enroll', async (req, res) => {
       age: parseInt(age),
       gender,
       instrument,
-      terms_accepted: termsAccepted
+      terms_accepted: termsAccepted,
+      photo: photo
     };
 
     if (parentContact) {
@@ -137,9 +145,9 @@ app.post('/api/enroll', async (req, res) => {
       .select();
 
     if (error) {
-      // Handle schema column missing error code 42703
+      // Handle schema column missing error code 42703 (like missing photo, parent_contact, etc.)
       if (error.code === '42703' || (error.message && error.message.toLowerCase().includes('column'))) {
-        console.warn("Warning: Supabase table 'enrollees' is missing parent_contact or blood_group columns. Falling back to default fields.");
+        console.warn("Warning: Supabase table 'enrollees' is missing columns. Falling back to default schema fields and file storage.");
         const fallbackData = {
           name: name.trim(),
           contact: contact.trim(),
@@ -148,6 +156,14 @@ app.post('/api/enroll', async (req, res) => {
           instrument,
           terms_accepted: termsAccepted
         };
+
+        if (parentContact && !error.message.includes('parent_contact')) {
+          fallbackData.parent_contact = parentContact.trim();
+        }
+        if (bloodGroup && !error.message.includes('blood_group')) {
+          fallbackData.blood_group = bloodGroup;
+        }
+
         const { data: fallbackRes, error: fallbackErr } = await supabase
           .from('enrollees')
           .insert([fallbackData])
@@ -165,7 +181,8 @@ app.post('/api/enroll', async (req, res) => {
     }
 
     if (photo && data && data[0]) {
-      await savePhoto(data[0].id, photo);
+      // Optional background backup save to files/storage
+      savePhoto(data[0].id, photo).catch(err => console.warn("Background photo save warning:", err));
     }
 
     res.json({ success: true, message: 'Enrolled successfully!', data: data[0] });
@@ -195,32 +212,25 @@ app.get('/api/enrollees', requireAdminAuth, async (req, res) => {
 
     if (error) throw error;
 
-    // Fetch existing files in the 'identity-photos' storage bucket to check presence
-    let storageFiles = [];
-    try {
-      const { data: listData, error: listError } = await supabase.storage
-        .from('identity-photos')
-        .list('', { limit: 1000 });
-      if (!listError && listData) {
-        storageFiles = listData.map(f => f.name);
-      }
-    } catch (storageErr) {
-      console.warn("Warning: Could not list files from Supabase Storage:", storageErr.message);
-    }
+
 
     // Map database snake_case fields back to front-end camelCase properties
     const mappedData = (data || []).map(item => {
       const photoName = `${item.id}.jpg`;
-      const hasStoragePhoto = storageFiles.includes(photoName);
       
       let photoUrl = null;
-      if (hasStoragePhoto) {
-        photoUrl = `https://zztmgekdjpygnaalojrc.supabase.co/storage/v1/object/public/identity-photos/${photoName}`;
+      if (item.photo) {
+        // Use the base64 photo URL stored directly in the database
+        photoUrl = item.photo;
       } else {
-        // Fallback to check local filesystem
+        // Fallback local filesystem check (great for local development / backup)
         const hasLocalPhoto = fs.existsSync(path.join(UPLOADS_DIR, photoName));
         if (hasLocalPhoto) {
           photoUrl = `/uploads/${photoName}`;
+        } else {
+          // Construct the public URL for Supabase storage directly.
+          // If the file is not found on Supabase either, the front-end will gracefully fall back.
+          photoUrl = `https://zztmgekdjpygnaalojrc.supabase.co/storage/v1/object/public/identity-photos/${photoName}`;
         }
       }
 
