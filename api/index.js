@@ -61,7 +61,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Admin Authentication Config
-const ADMIN_PASSWORD = 'pathak123';
+const ADMIN_PASSWORD = 'Saurabh@2026';
 const ADMIN_TOKEN = 'shivgandha-pathak-admin-token-2026';
 
 // Initialize Supabase client
