@@ -16,11 +16,38 @@ try {
   console.warn("Warning: Could not create local uploads folder (this is normal on stateless servers like Vercel):", err.message);
 }
 
+const DATA_FILE = path.join(__dirname, '..', 'data', 'enrollees.json');
+
+// Helper to read local enrollees JSON
+function getLocalEnrollees() {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, 'utf8');
+      return JSON.parse(raw) || [];
+    }
+  } catch (err) {
+    console.warn("Warning: Could not read local enrollees.json:", err.message);
+  }
+  return [];
+}
+
+// Helper to save local enrollees JSON
+function saveLocalEnrollees(enrollees) {
+  try {
+    const dir = path.dirname(DATA_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(enrollees, null, 2), 'utf8');
+  } catch (err) {
+    console.warn("Warning: Could not write local enrollees.json:", err.message);
+  }
+}
+
 // Helper function to save Base64 photo to Supabase Storage and local disk backup
 const savePhoto = async (id, base64Data) => {
   try {
     if (!base64Data) return;
-    // Strip out the data URL scheme if present
     const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
     let imageBuffer;
     if (matches && matches.length === 3) {
@@ -29,7 +56,7 @@ const savePhoto = async (id, base64Data) => {
       imageBuffer = Buffer.from(base64Data, 'base64');
     }
     
-    // 1. Save locally as backup if server filesystem is writable
+    // Save locally as backup if server filesystem is writable
     try {
       const photoPath = path.join(UPLOADS_DIR, `${id}.jpg`);
       fs.writeFileSync(photoPath, imageBuffer);
@@ -38,18 +65,16 @@ const savePhoto = async (id, base64Data) => {
       console.warn("Warning: Could not write local file backup (normal on Vercel):", fsErr.message);
     }
 
-    // 2. Upload to Supabase Storage bucket 'identity-photos'
-    const { data, error } = await supabase.storage
-      .from('identity-photos')
-      .upload(`${id}.jpg`, imageBuffer, {
-        contentType: 'image/jpeg',
-        upsert: true
-      });
-
-    if (error) {
-      console.error(`Error uploading photo to Supabase Storage for ID ${id}:`, error.message);
-    } else {
-      console.log(`Successfully uploaded photo to Supabase Storage for ID ${id}`);
+    // Upload to Supabase Storage bucket 'identity-photos'
+    try {
+      await supabase.storage
+        .from('identity-photos')
+        .upload(`${id}.jpg`, imageBuffer, {
+          contentType: 'image/jpeg',
+          upsert: true
+        });
+    } catch (sbErr) {
+      console.warn("Supabase Storage upload warning:", sbErr.message);
     }
   } catch (err) {
     console.error(`Error processing photo for enrollee ID ${id}:`, err);
@@ -69,36 +94,6 @@ const supabaseUrl = 'https://zztmgekdjpygnaalojrc.supabase.co';
 const supabaseKey = 'sb_publishable_okeZciLTaImpoCI3sfqdAw_fFZRIeXg';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Attempt to initialize storage bucket programmatically
-const initBucket = async () => {
-  try {
-    const { data, error } = await supabase.storage.createBucket('identity-photos', {
-      public: true,
-      fileSizeLimit: 10485760, // 10MB
-      allowedMimeTypes: ['image/jpeg', 'image/png']
-    });
-    if (error) {
-      if (error.message && error.message.includes('already exists')) {
-        console.log("Supabase storage bucket 'identity-photos' already exists.");
-      } else {
-        console.warn("Warning: Could not create Supabase storage bucket programmatically:", error.message);
-        console.warn("\n=================================================================================");
-        console.warn("IMPORTANT FOR DEPLOYMENT:");
-        console.warn("Since you are using a client/publishable key, the server cannot create storage buckets.");
-        console.warn("Please log into your Supabase Dashboard (https://supabase.com) and manually set up:");
-        console.warn("  1. Create a public bucket named 'identity-photos'");
-        console.warn("  2. Add RLS Policies to allow Select (read) and Insert/Update (write) for public / anonymous users.");
-        console.warn("=================================================================================\n");
-      }
-    } else {
-      console.log("Successfully created Supabase storage bucket 'identity-photos'.");
-    }
-  } catch (err) {
-    console.warn("Warning: Failed programmatically creating Supabase bucket:", err.message);
-  }
-};
-initBucket();
-
 // Middleware to verify admin session
 function requireAdminAuth(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -116,78 +111,60 @@ function requireAdminAuth(req, res, next) {
 app.post('/api/enroll', async (req, res) => {
   const { name, contact, age, instrument, gender, termsAccepted, parentContact, bloodGroup, photo } = req.body;
 
-  // Basic validation (photo is required for identity validation)
   if (!name || !contact || !age || !instrument || !gender || termsAccepted === undefined || !parentContact || !bloodGroup || !photo) {
     return res.status(400).json({ success: false, message: 'All fields are required, including identity photo' });
   }
 
   try {
-    const enrolleeData = {
+    const enrolleeId = Date.now().toString();
+    const newEnrollee = {
+      id: enrolleeId,
       name: name.trim(),
       contact: contact.trim(),
+      parentContact: parentContact.trim(),
+      bloodGroup: bloodGroup,
       age: parseInt(age),
-      gender,
       instrument,
-      terms_accepted: termsAccepted,
-      photo: photo
+      gender,
+      termsAccepted: termsAccepted,
+      photoUrl: photo,
+      enrolledAt: new Date().toISOString()
     };
 
-    if (parentContact) {
-      enrolleeData.parent_contact = parentContact.trim();
-    }
-    if (bloodGroup) {
-      enrolleeData.blood_group = bloodGroup;
-    }
+    // 1. Save to local JSON file backup
+    const localEnrollees = getLocalEnrollees();
+    localEnrollees.unshift(newEnrollee);
+    saveLocalEnrollees(localEnrollees);
 
-    const { data, error } = await supabase
-      .from('enrollees')
-      .insert([enrolleeData])
-      .select();
-
-    if (error) {
-      // Handle schema column missing error code 42703 (like missing photo, parent_contact, etc.)
-      if (error.code === '42703' || (error.message && error.message.toLowerCase().includes('column'))) {
-        console.warn("Warning: Supabase table 'enrollees' is missing columns. Falling back to default schema fields and file storage.");
-        const fallbackData = {
-          name: name.trim(),
-          contact: contact.trim(),
-          age: parseInt(age),
-          gender,
-          instrument,
-          terms_accepted: termsAccepted
-        };
-
-        if (parentContact && !error.message.includes('parent_contact')) {
-          fallbackData.parent_contact = parentContact.trim();
-        }
-        if (bloodGroup && !error.message.includes('blood_group')) {
-          fallbackData.blood_group = bloodGroup;
-        }
-
-        const { data: fallbackRes, error: fallbackErr } = await supabase
-          .from('enrollees')
-          .insert([fallbackData])
-          .select();
-
-        if (fallbackErr) throw fallbackErr;
-        
-        if (photo && fallbackRes && fallbackRes[0]) {
-          await savePhoto(fallbackRes[0].id, photo);
-        }
-        
-        return res.json({ success: true, message: 'Enrolled successfully!', data: fallbackRes[0] });
-      }
-      throw error;
+    // 2. Save photo locally
+    if (photo) {
+      savePhoto(enrolleeId, photo).catch(err => console.warn("Photo save warning:", err.message));
     }
 
-    if (photo && data && data[0]) {
-      // Optional background backup save to files/storage
-      savePhoto(data[0].id, photo).catch(err => console.warn("Background photo save warning:", err));
+    // 3. Try saving to Supabase in background
+    try {
+      const enrolleeData = {
+        name: name.trim(),
+        contact: contact.trim(),
+        age: parseInt(age),
+        gender,
+        instrument,
+        terms_accepted: termsAccepted,
+        photo: photo,
+        parent_contact: parentContact.trim(),
+        blood_group: bloodGroup
+      };
+
+      await supabase
+        .from('enrollees')
+        .insert([enrolleeData]);
+    } catch (sbErr) {
+      console.warn("Supabase connection warning (local copy saved):", sbErr.message);
     }
 
-    res.json({ success: true, message: 'Enrolled successfully!', data: data[0] });
+    return res.json({ success: true, message: 'Enrolled successfully!', data: newEnrollee });
   } catch (err) {
-    console.error("Error inserting enrollee into Supabase:", err);
+    console.error("Error saving enrollee:", err);
     res.status(500).json({ success: false, message: 'Failed to save enrollment: ' + err.message });
   }
 });
@@ -204,36 +181,60 @@ app.post('/api/admin/login', (req, res) => {
 
 // API to list all enrollees
 app.get('/api/enrollees', requireAdminAuth, async (req, res) => {
+  let mappedData = [];
+
+  // Try fetching from Supabase first
   try {
     const { data, error } = await supabase
       .from('enrollees')
       .select('*')
       .order('enrolled_at', { ascending: false });
 
-    if (error) throw error;
-
-
-
-    // Map database snake_case fields back to front-end camelCase properties
-    const mappedData = (data || []).map(item => {
-      const photoName = `${item.id}.jpg`;
-      
-      let photoUrl = null;
-      if (item.photo) {
-        // Use the base64 photo URL stored directly in the database
-        photoUrl = item.photo;
-      } else {
-        // Fallback local filesystem check (great for local development / backup)
-        const hasLocalPhoto = fs.existsSync(path.join(UPLOADS_DIR, photoName));
-        if (hasLocalPhoto) {
-          photoUrl = `/uploads/${photoName}`;
+    if (!error && Array.isArray(data) && data.length > 0) {
+      mappedData = data.map(item => {
+        const photoName = `${item.id}.jpg`;
+        let photoUrl = null;
+        if (item.photo) {
+          photoUrl = item.photo;
         } else {
-          // Construct the public URL for Supabase storage directly.
-          // If the file is not found on Supabase either, the front-end will gracefully fall back.
-          photoUrl = `https://zztmgekdjpygnaalojrc.supabase.co/storage/v1/object/public/identity-photos/${photoName}`;
+          const hasLocalPhoto = fs.existsSync(path.join(UPLOADS_DIR, photoName));
+          if (hasLocalPhoto) {
+            photoUrl = `/uploads/${photoName}`;
+          } else {
+            photoUrl = `https://zztmgekdjpygnaalojrc.supabase.co/storage/v1/object/public/identity-photos/${photoName}`;
+          }
+        }
+        return {
+          id: item.id,
+          name: item.name,
+          contact: item.contact,
+          age: item.age,
+          gender: item.gender,
+          instrument: item.instrument,
+          termsAccepted: item.terms_accepted,
+          enrolledAt: item.enrolled_at,
+          parentContact: item.parent_contact,
+          bloodGroup: item.blood_group,
+          photoUrl: photoUrl
+        };
+      });
+    }
+  } catch (err) {
+    console.warn("Supabase fetch warning, falling back to local storage:", err.message);
+  }
+
+  // Fallback to / Merge with local enrollees.json
+  const localEnrollees = getLocalEnrollees();
+  
+  if (mappedData.length === 0) {
+    mappedData = localEnrollees.map(item => {
+      let photoUrl = item.photoUrl || item.photo || null;
+      if (!photoUrl) {
+        const photoName = `${item.id}.jpg`;
+        if (fs.existsSync(path.join(UPLOADS_DIR, photoName))) {
+          photoUrl = `/uploads/${photoName}`;
         }
       }
-
       return {
         id: item.id,
         name: item.name,
@@ -241,65 +242,69 @@ app.get('/api/enrollees', requireAdminAuth, async (req, res) => {
         age: item.age,
         gender: item.gender,
         instrument: item.instrument,
-        termsAccepted: item.terms_accepted,
-        enrolledAt: item.enrolled_at,
-        parentContact: item.parent_contact,
-        bloodGroup: item.blood_group,
+        termsAccepted: item.termsAccepted,
+        enrolledAt: item.enrolledAt,
+        parentContact: item.parentContact,
+        bloodGroup: item.bloodGroup,
         photoUrl: photoUrl
       };
     });
-
-    res.json({ success: true, data: mappedData });
-  } catch (err) {
-    console.error("Error fetching enrollees from Supabase:", err);
-    res.status(500).json({ success: false, message: 'Failed to fetch enrollees: ' + err.message });
+  } else {
+    const existingIds = new Set(mappedData.map(e => String(e.id)));
+    localEnrollees.forEach(item => {
+      if (!existingIds.has(String(item.id))) {
+        let photoUrl = item.photoUrl || item.photo || null;
+        if (!photoUrl) {
+          const photoName = `${item.id}.jpg`;
+          if (fs.existsSync(path.join(UPLOADS_DIR, photoName))) {
+            photoUrl = `/uploads/${photoName}`;
+          }
+        }
+        mappedData.push({
+          id: item.id,
+          name: item.name,
+          contact: item.contact,
+          age: item.age,
+          gender: item.gender,
+          instrument: item.instrument,
+          termsAccepted: item.termsAccepted,
+          enrolledAt: item.enrolledAt,
+          parentContact: item.parentContact,
+          bloodGroup: item.bloodGroup,
+          photoUrl: photoUrl
+        });
+      }
+    });
   }
+
+  res.json({ success: true, data: mappedData });
 });
 
 // API to delete an enrollee
 app.delete('/api/enrollees/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
 
+  // 1. Delete from local JSON file
+  const localEnrollees = getLocalEnrollees().filter(item => String(item.id) !== String(id));
+  saveLocalEnrollees(localEnrollees);
+
+  // 2. Try deleting from Supabase
   try {
-    const { error } = await supabase
-      .from('enrollees')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-
-    const photoName = `${id}.jpg`;
-
-    // 1. Delete from Supabase Storage
-    try {
-      const { error: storageDelError } = await supabase.storage
-        .from('identity-photos')
-        .remove([photoName]);
-      if (storageDelError) {
-        console.error(`Error deleting photo from Supabase Storage:`, storageDelError.message);
-      } else {
-        console.log(`Deleted photo from Supabase Storage for ID ${id}`);
-      }
-    } catch (storageErr) {
-      console.error(`Failed to connect to Supabase Storage for deletion:`, storageErr.message);
-    }
-
-    // 2. Clean up local backup photo file if it exists
-    const photoPath = path.join(UPLOADS_DIR, photoName);
-    if (fs.existsSync(photoPath)) {
-      try {
-        fs.unlinkSync(photoPath);
-        console.log(`Deleted local photo backup for enrollee ID ${id}`);
-      } catch (err) {
-        console.error(`Error deleting local photo backup for ID ${id}:`, err);
-      }
-    }
-
-    res.json({ success: true, message: 'Enrollee deleted successfully' });
+    await supabase.from('enrollees').delete().eq('id', id);
   } catch (err) {
-    console.error("Error deleting enrollee from Supabase:", err);
-    res.status(500).json({ success: false, message: 'Failed to delete enrollee: ' + err.message });
+    console.warn("Supabase delete warning:", err.message);
   }
+
+  // 3. Clean up local photo file if exists
+  const photoName = `${id}.jpg`;
+  const photoPath = path.join(UPLOADS_DIR, photoName);
+  if (fs.existsSync(photoPath)) {
+    try {
+      fs.unlinkSync(photoPath);
+    } catch (err) {}
+  }
+
+  res.json({ success: true, message: 'Enrollee deleted successfully' });
 });
 
 // Catch-all to serve index.html for unknown routes

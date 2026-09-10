@@ -1,7 +1,8 @@
-const CACHE_NAME = 'shivgandha-cache-v1';
+const CACHE_NAME = 'shivgandha-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
+  '/intro.html',
   '/admin.html',
   '/style.css',
   '/admin.css',

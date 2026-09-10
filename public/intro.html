@@ -250,6 +250,9 @@
     function navigateToMain() {
       if (navigating) return;
       navigating = true;
+      try {
+        sessionStorage.setItem('intro_just_played', 'true');
+      } catch (e) {}
       document.body.classList.add('fade-out');
       setTimeout(() => {
         window.location.href = 'index.html';
